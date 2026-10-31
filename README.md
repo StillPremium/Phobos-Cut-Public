@@ -1,4 +1,4 @@
-# Phobos-Cut-Public
+# Phobos Cut
 
 <div>
   <p align="center">
