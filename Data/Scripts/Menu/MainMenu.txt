@@ -1,0 +1,463 @@
+// ----------------------------------
+// RSDK Project: Sonic 1
+// Script Description: Main Menu Object
+// Script Author: Nd1206
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.timer
+private alias object.value1 : object.fade
+private alias object.value2 : object.currentSelection
+private alias object.value3 : object.flashTimer
+private alias object.value4 : object.spikesPos.x
+private alias object.value5 : object.spikesPos.y
+private alias object.value6 : object.shadowPos
+private alias object.value7 : object.returning
+
+// States
+private alias 0 : MAIN_INIT
+private alias 1 : MAIN_FADEIN
+private alias 2 : MAIN_CONTROLS
+private alias 3 : MAIN_FLASHOPTION
+private alias 4 : MAIN_CASEDEPENDANT
+private alias 5 : MAIN_RETURNING
+
+// Options
+private alias 0 : MAIN_START
+private alias 1 : MAIN_EXTRAS
+private alias 2 : MAIN_OPTIONS
+private alias 3 : MAIN_EXIT
+
+// Ink Effects
+public alias 0 : INK_NONE
+public alias 1 : INK_BLEND
+public alias 2 : INK_ALPHA
+public alias 3 : INK_ADD
+public alias 4 : INK_SUB
+
+// Flip Directions
+public alias 0 : FLIP_NONE
+public alias 1 : FLIP_X
+public alias 2 : FLIP_Y
+public alias 3 : FLIP_XY
+
+// Save Select Aliases
+private alias object.value13 : object.arrowFlash
+
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	switch object.state
+	case MAIN_INIT
+		if object.returning == false
+			object.fade = 256
+			object.state++
+			object.spikesPos.y = screen.ysize
+
+			PlayMusic(0)
+			SetScreenFade(0, 0, 0, 255)
+			if stage.lastMenu == 1
+				ResetObjectEntity(0, TypeName[Save Select], 0, 0, 0)
+			end if
+			if stage.lastMenu == 2
+				ResetObjectEntity(0, TypeName[Time Attack], 0, 0, 0)
+			end if
+		else
+			object.spikesPos.y = screen.ysize
+			object.spikesPos.y += 34
+			camera[0].xpos = screen.xsize
+			object.state = MAIN_RETURNING
+		end if
+		options.physicalControls = true
+		break
+
+	case MAIN_FADEIN
+		object.fade -= 8
+		if object.fade < 7
+			object.fade = 0
+			object.state++
+		end if
+		break
+
+	case MAIN_CONTROLS
+		camera[0].xpos = 0
+
+		CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+		if checkResult > -1
+			options.physicalControls = false
+		end if
+
+		if options.physicalControls == false
+			CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+			if checkResult > -1
+				object.currentSelection = 47
+
+				temp0 = screen.xsize
+				temp0 -= 125
+				
+				temp1 = temp0
+				temp1 += 186
+				CheckTouchRect(temp0, 20, temp1, 60)
+				if checkResult > -1
+					object.currentSelection = MAIN_START
+				end if
+
+				CheckTouchRect(temp0, 65, temp1, 105)
+				if checkResult > -1
+					object.currentSelection = MAIN_EXTRAS
+				end if
+
+				CheckTouchRect(temp0, 110, temp1, 145)
+				if checkResult > -1
+					object.currentSelection = MAIN_OPTIONS
+				end if
+
+				CheckTouchRect(temp0, 150, temp1, 185)
+				if checkResult > -1
+					object.currentSelection = MAIN_EXIT
+				end if
+			else
+				options.physicalControls = true
+
+				if object.currentSelection != 47
+					object.state++
+					object.timer = 0
+					object.flashTimer = 0
+					PlaySfx(SfxName[Menu Select], 0)
+					if object.currentSelection == MAIN_EXIT
+						StopMusic()
+					end if
+				else
+					object.currentSelection = MAIN_START
+				end if
+			end if
+		end if
+
+		if keyPress[0].up == true
+			options.physicalControls = true
+			object.currentSelection--
+			object.currentSelection &= MAIN_EXIT
+			object.shadowPos = 0
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		if keyPress[0].down == true
+			options.physicalControls = true
+			object.currentSelection++
+			object.currentSelection &= MAIN_EXIT
+			object.shadowPos = 0
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		temp0 = keyPress[0].start
+		temp0 |= keyPress[0].buttonA
+		if temp0 == true
+			if object.currentSelection != 47
+				options.physicalControls = true
+
+				object.state++
+				PlaySfx(SfxName[Menu Select], false)
+				if object.currentSelection == MAIN_EXIT
+					StopMusic()
+				end if
+			end if
+		end if
+
+		object.shadowPos++
+		if object.shadowPos >= 4
+			object.shadowPos = 4
+		end if
+		break
+
+	case MAIN_FLASHOPTION
+		object.flashTimer++
+		object.flashTimer %= 6
+
+		object.timer++
+		if object.timer >= 36
+			object.flashTimer = 0
+			object.timer = 0
+			object.state++
+		end if
+
+		menu1.selection = 0
+		menu2.selection = 0
+		break
+
+	case MAIN_CASEDEPENDANT
+		switch object.currentSelection
+		case MAIN_START
+			object.spikesPos.y -= 8
+			if object.spikesPos.y <= 0
+				ResetObjectEntity(0, TypeName[Save Select], 0, 0, 0)
+				object[0].currentSelection = 1
+				object[0].rotation = 256
+				object[0].flashTimer = object[1].flashTimer
+				object[0].arrowFlash = object[1].arrowFlash
+
+				ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
+			end if
+			temp0 = screen.ysize
+			temp0 -= 32
+			if object.spikesPos.y == temp0
+				ResetObjectEntity(1, TypeName[Save Select], 1, 0, 0)
+				object[1].state = 47
+				object[1].drawOrder = 4
+				object[1].currentSelection = 1
+				object[1].rotation = 256
+			end if
+			if object.spikesPos.y <= temp0
+				screen.yoffset = object.spikesPos.y
+
+				object[1].flashTimer++
+				object[1].flashTimer %= 12
+
+				object[1].arrowFlash++
+				object[1].arrowFlash %= 32
+			end if
+			break
+
+		case MAIN_EXTRAS
+			object.spikesPos.y -= 8
+			if object.spikesPos.y <= 0
+				ResetObjectEntity(0, TypeName[Extras], 0, 0, 0)
+				object[0].flashTimer = object[1].flashTimer
+				object[0].arrowFlash = object[1].arrowFlash
+
+				ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
+			end if
+			temp0 = screen.ysize
+			temp0 -= 32
+			if object.spikesPos.y == temp0
+				ResetObjectEntity(1, TypeName[Extras], 1, 0, 0)
+				object[1].state = 47
+				object[1].drawOrder = 4
+			end if
+			if object.spikesPos.y <= temp0
+				screen.yoffset = object.spikesPos.y
+
+				object[1].flashTimer++
+				object[1].flashTimer %= 12
+			end if
+			break
+
+		case MAIN_OPTIONS
+			object.spikesPos.y -= 8
+			if object.spikesPos.y <= 0
+				ResetObjectEntity(0, TypeName[Options], 0, 0, 0)
+				object[0].alpha = object[1].alpha
+
+				ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
+			end if
+			temp0 = screen.ysize
+			temp0 -= 32
+			if object.spikesPos.y == temp0
+				ResetObjectEntity(1, TypeName[Options], 1, 0, 0)
+				object[1].state = 47
+				object[1].drawOrder = 4
+			end if
+			if object.spikesPos.y <= temp0
+				screen.yoffset = object.spikesPos.y
+
+				if object[1].alpha < 250
+					object[1].alpha += 8
+				else
+					object[1].alpha = 255
+				end if
+			end if
+			break
+
+		case MAIN_EXIT
+			object.spikesPos.y -= 6
+			if object.spikesPos.y <= -48
+				CallNativeFunction(ExitGame)
+			end if
+			break
+			
+		end switch
+		break
+
+	case MAIN_RETURNING
+		camera[0].xpos = object[0].spikesPos.x
+		FlipSign(camera[0].xpos)
+		camera[0].xpos += screen.xsize
+		camera[0].xpos += 80
+
+		if camera[0].xpos <= 0
+			ResetObjectEntity(0, TypeName[Main Menu], 0, 0, 0)
+			camera[0].xpos = 0
+			object[0].fade = 0
+			object[0].state = MAIN_CONTROLS
+			object[0].spikesPos.x = object[1].spikesPos.x
+			object[0].spikesPos.y = screen.ysize
+			object[0].rotation = object[1].rotation
+			object[0].currentSelection = object[1].currentSelection
+
+			ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
+		end if
+
+		if camera[0].xpos <= 80
+			temp0 = screen.ysize
+			temp0 += 4
+			if object.spikesPos.y <= temp0
+				object.spikesPos.y = screen.ysize
+			else
+				object.spikesPos.y -= 4
+			end if
+		end if
+		break
+		
+	end switch
+
+	object.drawOrder = 4
+	object.rotation += 2
+	object.rotation &= 511
+
+	object.spikesPos.x++
+	object.spikesPos.x %= 156
+end event
+
+
+event ObjectDraw
+	temp0 = object[0].spikesPos.x
+	temp0 -= 80
+	DrawRect(0, 0, temp0, screen.ysize, 0xF8, 0xF8, 0xF8, 0xFF)
+
+	temp0 = 49
+	temp0 -= camera[0].xpos
+	if screen.xsize <= 320
+		temp0 -= 12
+	end if
+	DrawSpriteScreenFX(3, FX_ROTATE, temp0, 44)				// Rotating Circle
+
+	temp0 = camera[0].xpos
+	FlipSign(temp0)
+	if screen.xsize <= 384
+		temp0 -= 30
+
+		if screen.xsize <= 320
+			temp0 -= 30
+		end if
+	end if
+	DrawSpriteScreenXY(2, temp0, screen.ysize)				// Sonic
+
+	temp3 = screen.xsize
+	temp3 -= camera[0].xpos
+	DrawSpriteScreenXY(1, temp3, 0)						// Blue Slant
+
+	object.alpha = 160
+	object.inkEffect = INK_ALPHA
+
+	temp2 = object.shadowPos
+	temp2 /= 2
+
+	temp0 = object.currentSelection
+	temp0 += 8
+
+	temp1 = screen.xsize
+	temp1 -= camera[0].xpos
+	temp1 += temp2
+	DrawSpriteScreenFX(temp0, FX_INK, temp1, temp2)				// Highlighted Text Shadow
+
+	temp0 -= 4
+	DrawSpriteScreenXY(temp0, temp3, 0)					// Highlighted Text
+
+	// Hide the text if the flash timer is at a certain point
+	if object.flashTimer >= 3
+		temp2 = object.currentSelection
+		temp2++
+		temp2 *= 12
+		FlipSign(temp2)
+		temp2 += screen.xsize
+		temp2 -= 93
+
+		temp1 = object.currentSelection
+		temp1++
+		temp1 *= 32
+		temp1 /= 3
+
+		temp0 = object.currentSelection
+		temp0++
+		temp0 *= 32
+		temp0 += temp1
+		temp0 -= 9
+		DrawRect(temp2, temp0, screen.xsize, 20, 0x20, 0x60, 0xC0, 0xFF)
+	end if
+
+	arrayPos0 = object.spikesPos.x
+	arrayPos0 /= 2
+	arrayPos0 -= 78
+	temp0 = screen.xsize
+	temp0 += 78
+	while arrayPos0 <= temp0
+		if object.state > MAIN_INIT
+			DrawSpriteScreenXY(0, arrayPos0, object.spikesPos.y)	// Spikes
+		end if
+		arrayPos0 += 78
+	loop
+
+	if object.state > MAIN_INIT
+		temp0 = screen.ysize
+		temp0 *= 2
+		DrawRect(0, object.spikesPos.y, screen.xsize, temp0, 0xF8, 0xF8, 0x00, 0xFF)
+	end if
+
+	if object.alpha > 2
+		SetScreenFade(0, 0, 0, object.fade)
+	end if
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Menu/Main.gif")
+	
+	SpriteFrame(0, -34, 78, 34, 1, 1)		// #0  - Spikes
+
+	SpriteFrame(-164, 0, 164, 240, 80, 1)		// #1  - Blue Slant
+
+	SpriteFrame(89, -190, 171, 190, 245, 69)	// #2  - Sonic the Hedgehog HIMSELF !!!
+	SpriteFrame(-34, -34, 68, 68, 417, 69)		// #3  - Rotating Circle
+
+	SpriteFrame(-80, 35, 76, 16, 245, 1)		// #4  - Highlighted START
+	SpriteFrame(-97, 77, 93, 16, 245, 18)		// #5  - Highlighted EXTRAS
+	SpriteFrame(-106, 119, 102, 16, 245, 35)	// #6  - Highlighted OPTIONS
+	SpriteFrame(-57, 161, 53, 16, 245, 52)		// #7  - Highlighted EXIT
+
+	SpriteFrame(-80, 35, 76, 16, 348, 1)		// #8  - START Shadow
+	SpriteFrame(-97, 77, 93, 16, 348, 18)		// #9  - EXTRAS Shadow
+	SpriteFrame(-106, 119, 102, 16, 348, 35)	// #10 - OPTIONS Shadow
+	SpriteFrame(-57, 161, 53, 16, 348, 52)		// #11 - EXIT Shadow
+
+	object[0].type = TypeName[Main Menu]
+
+	SetMusicTrack("MainMenu.ogg", 0, true)
+
+	LoadPalette("Achievements.act", 0, 0, 0, 96)
+
+	ReadSaveRAM()
+end event
+
+
+// ========================
+// Editor Events
+// ========================
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Items.gif")
+	SpriteFrame(-24, -24, 48, 48, 207, 1)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event

@@ -1,0 +1,103 @@
+// ----------------------------------
+// RSDK Project: Sonic 1
+// Script Description: SBZ3 Exit Object
+// Script Author: Christian Whitehead/Simon Thomley
+// Unpacked by Rubberduckycooly's script unpacker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.timer
+
+// Player values
+private alias object.type		 : player.type
+private alias object.groupID	 : player.groupID
+private alias object.controlMode : player.controlMode
+private alias object.animation	 : player.animation
+private alias object.direction	 : player.direction
+private alias object.value0		 : player.rings
+
+private alias 0 : SBZ3EXIT_WAIT
+private alias 1 : SBZ3EXIT_FINISH
+
+// Game Modes
+private alias 0 : MODE_NOSAVE
+private alias 1 : MODE_SAVEGAME
+private alias 2 : MODE_TIMEATTACK
+
+// Tracks
+private alias 1 : TRACK_ACTFINISH
+
+// Reserved Object Slot Aliases
+private alias 30 : SLOT_ACTFINISH
+
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	switch object.state
+	case SBZ3EXIT_WAIT
+		// Check for player collision
+		BoxCollisionTest(C_TOUCH, object.entityPos, -128, -16, 128, 16, 0, C_BOX, C_BOX, C_BOX, C_BOX)
+		if checkResult == true
+			// First, erase the player object (by turning them into a ring!)
+			player[0].type = TypeName[Ring]
+			player[0].groupID = TypeName[Blank Object]
+			player[0].controlMode = CONTROLMODE_NONE
+
+			object.state = SBZ3EXIT_FINISH
+			stage.timeEnabled = false
+
+			recAnimation = 0
+			temp0 = 0
+			foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+				temp1 = player[currentPlayer].animation
+				temp1 <<= 8
+				temp1 |= player[currentPlayer].direction
+				temp1 <<= temp0
+
+				recAnimation |= temp1
+				temp0 += 16
+			next
+		end if
+		break
+
+	case SBZ3EXIT_FINISH
+		// Show the act results
+		
+		if object.timer < 60
+			object.timer++
+			music.volume -= 2
+		else
+			object.type = TypeName[Blank Object]
+
+			object[SLOT_ACTFINISH].type = TypeName[Act Finish]
+			object[SLOT_ACTFINISH].drawOrder = 6
+			object[SLOT_ACTFINISH].priority = PRIORITY_ACTIVE
+			PlayMusic(TRACK_ACTFINISH)
+		end if
+		break
+
+	end switch
+end event
+
+
+// ========================
+// Editor Events
+// ========================
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Display.gif")
+	SpriteFrame(-8, -8, 16, 16, 239, 239) // "Trigger" - #0
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event

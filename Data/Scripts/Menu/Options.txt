@@ -1,0 +1,917 @@
+// ----------------------------------
+// RSDK Project: Sonic 1
+// Script Description: Options Object
+// Script Author: Nd1206
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0  : object.timer
+private alias object.value1  : object.fade
+private alias object.value2  : object.currentSelection
+private alias object.value3  : object.flashTimer
+private alias object.value4  : object.spikesPos.x
+private alias object.value5  : object.spikesPos.y
+private alias object.value6  : object.titlePos.y
+private alias object.value7  : object.returning
+private alias object.value8  : object.pressedLR
+private alias object.value9  : object.pressedUD
+
+// States
+private alias 0 : OPTIONS_INIT
+private alias 1 : OPTIONS_SLIDEIN
+private alias 2 : OPTIONS_CONTROLS
+private alias 3 : OPTIONS_FLASHOPTION
+private alias 4 : OPTIONS_CASEDEPENDANT
+private alias 5 : OPTIONS_RETURNING
+
+// Options
+private alias 0  : OPTIONS_MUSIC
+private alias 1  : OPTIONS_SFX
+private alias 2  : OPTIONS_WINDOWSCALE
+private alias 3  : OPTIONS_WINDOWBORDER
+private alias 4  : OPTIONS_SCREENRATIO
+private alias 5  : OPTIONS_SCREENFILTER
+private alias 6  : OPTIONS_VSYNC
+private alias 7  : OPTIONS_BLANK1
+private alias 8  : OPTIONS_BLANK2
+private alias 9  : OPTIONS_SPINDASH
+private alias 10 : OPTIONS_DROPDASH
+private alias 11 : OPTIONS_SUPERPEELOUT
+private alias 12 : OPTIONS_SHIELDTYPE
+private alias 13 : OPTIONS_GSPEEDCAP
+private alias 14 : OPTIONS_ASPEEDCAP
+private alias 15 : OPTIONS_SPIKEBUG
+private alias 16 : OPTIONS_REGION
+private alias 17 : OPTIONS_EXTENDEDCAMERA
+private alias 18 : OPTIONS_EMERALDCOUNT
+private alias 19 : OPTIONS_COINMODE
+private alias 20 : OPTIONS_BACK
+
+// Game Mode Aliases
+private alias 0 : MODE_NOSAVE
+private alias 1 : MODE_SAVEGAME
+private alias 2 : MODE_TIMEATTACK
+
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	switch object.state
+	case OPTIONS_INIT
+		object.spikesPos.x = -34
+		object.titlePos.y = -26
+		object.state++
+		break
+
+	case OPTIONS_SLIDEIN
+		object.spikesPos.x += 4
+		if object.spikesPos.x > -4
+			object.spikesPos.x = 0
+			object.state++
+		end if
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		if object.titlePos.y < 1
+			object.titlePos.y += 4
+		else
+			object.titlePos.y = 5
+		end if
+		break
+
+	case OPTIONS_CONTROLS
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+		if checkResult > -1
+			options.physicalControls = false
+		end if
+
+		if options.physicalControls == false
+			CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+			if checkResult > -1
+				CheckTouchRect(0, 96, 128, screen.ysize)
+				if checkResult > -1
+					CheckTouchRect(0, 178, 128, screen.ysize)
+					if checkResult > -1
+						keyDown[0].down = true
+						if object.pressedUD == false
+							keyPress[0].down |= keyDown[0].down
+						end if
+						object.pressedUD = keyDown[0].down
+					else
+						keyDown[0].up = true
+						if object.pressedUD == false
+							keyPress[0].up |= keyDown[0].up
+							end if
+						object.pressedUD = keyDown[0].up
+					end if
+					object.pressedLR = false
+				else
+					CheckTouchRect(130, 96, screen.xsize, screen.ysize)
+					if checkResult > -1
+						options.physicalControls = true
+						keyDown[0].right = true
+						if object.pressedLR == false
+							keyPress[0].right |= keyDown[0].right
+						end if
+						object.pressedLR = keyDown[0].right
+						object.pressedUD = false
+					else
+						temp0 = object.titlePos.y
+						temp0 += 26
+						
+						CheckTouchRect(36, object.titlePos.y, 98, temp0)
+						if checkResult > -1
+							object.currentSelection = OPTIONS_BACK
+							object.pressedLR = false
+							object.pressedUD = false
+						else
+							if object.currentSelection == OPTIONS_BACK
+								object.currentSelection = OPTIONS_MUSIC
+							end if
+						end if
+					end if
+				end if
+			else
+				options.physicalControls = true	
+
+				if object.currentSelection == OPTIONS_BACK
+					object.state = OPTIONS_RETURNING
+				end if
+			end if
+		else
+			object.pressedLR = false
+			object.pressedUD = false
+		end if
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		if object.titlePos.y < 1
+			object.titlePos.y += 4
+		else
+			object.titlePos.y = 5
+		end if
+
+		temp0 = OPTIONS_EMERALDCOUNT
+#platform: USE_ORIGINS
+		temp0 = OPTIONS_COINMODE
+#endplatform
+
+		if keyPress[0].up == true
+			object.currentSelection--
+
+			if object.currentSelection < OPTIONS_MUSIC
+				object.currentSelection = temp0
+			end if
+
+			if object.currentSelection >= OPTIONS_BLANK1
+				if object.currentSelection <= OPTIONS_BLANK2
+					object.currentSelection -= 2
+				end if
+			end if
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		if keyPress[0].down == true
+			object.currentSelection++
+
+			if object.currentSelection > temp0
+				object.currentSelection = OPTIONS_MUSIC
+			end if
+
+			if object.currentSelection >= OPTIONS_BLANK1
+				if object.currentSelection <= OPTIONS_BLANK2
+					object.currentSelection += 2
+				end if
+			end if
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		menu1.selection = object.currentSelection
+		menu2.selection = object.currentSelection
+
+		temp0 = keyPress[0].left
+		temp0 |= keyPress[0].right
+		temp0 |= keyPress[0].start
+		temp0 |= keyPress[0].buttonA
+		if temp0 == true
+			switch object.currentSelection
+			case OPTIONS_MUSIC
+				if keyPress[0].left == true
+					saveRAM[33] -= 20
+				else
+					saveRAM[33] += 20
+				end if
+
+				if saveRAM[33] <= 0
+					saveRAM[33] = 0
+				end if
+
+				if saveRAM[33] >= 100
+					saveRAM[33] = 100
+				end if
+				break
+
+			case OPTIONS_SFX
+				if keyPress[0].left == true
+					saveRAM[34] -= 20
+				else
+					saveRAM[34] += 20
+				end if
+
+				if saveRAM[34] <= 0
+					saveRAM[34] = 0
+				end if
+
+				if saveRAM[34] >= 100
+					saveRAM[34] = 100
+				end if
+				break
+
+			case OPTIONS_WINDOWSCALE
+				CallNativeFunction(GetWindowScale)
+				switch checkResult
+				default
+					temp0 = 2
+					CallNativeFunction2(SetWindowFullScreen, false, 0)
+					break
+
+				case 1
+					if keyPress[0].left == true
+						temp0 = 1
+					else
+						temp0 = 2
+					end if
+					CallNativeFunction2(SetWindowFullScreen, false, 0)
+					break
+
+				case 2
+					if keyPress[0].left == true
+						temp0 = 1
+					else
+						temp0 = 3
+					end if
+					CallNativeFunction2(SetWindowFullScreen, false, 0)
+					break
+
+				case 3
+					if keyPress[0].left == true
+						temp0 = 2
+					else
+						temp0 = 4
+					end if
+					CallNativeFunction2(SetWindowFullScreen, false, 0)
+					break
+
+				case 4
+					if keyPress[0].left == true
+						CallNativeFunction(GetWindowFullScreen)
+						if checkResult == false
+							temp0 = 3
+						else
+							temp0 = 4
+						end if
+						CallNativeFunction2(SetWindowFullScreen, false, 0)
+					else
+						temp0 = 4
+						CallNativeFunction2(SetWindowFullScreen, true, 0)
+					end if
+					break
+
+				end switch
+				CallNativeFunction2(SetWindowScale, temp0, 0)
+
+				// Prevent the fullscreen option from breaking
+				CallNativeFunction(GetWindowFullScreen)
+				CallNativeFunction2(SetWindowFullScreen, checkResult, 0)
+
+				CallNativeFunction(ApplyWindowChanges)
+				break
+
+			case OPTIONS_WINDOWBORDER
+				CallNativeFunction(GetWindowBorderless)
+				temp0 = checkResult
+				temp0 ^= 1
+				CallNativeFunction2(SetWindowBorderless, temp0, 0)
+
+				// Prevent the fullscreen option from breaking
+				CallNativeFunction(GetWindowFullScreen)
+				CallNativeFunction2(SetWindowFullScreen, checkResult, 0)
+
+				CallNativeFunction(ApplyWindowChanges)
+				break
+
+			case OPTIONS_SCREENRATIO
+				CallNativeFunction(GetScreenWidth)
+				switch checkResult
+				default
+					temp0 = 424
+					break
+
+				case 320
+					if keyPress[0].left == true
+						temp0 = 320
+					else
+						temp0 = 384
+					end if
+					break
+
+				case 384
+					if keyPress[0].left == true
+						temp0 = 320
+					else
+						temp0 = 424
+					end if
+					break
+
+				case 424
+					if keyPress[0].left == true
+						temp0 = 384
+					else
+						temp0 = 424
+					end if
+					break
+
+				end switch
+				CallNativeFunction2(SetScreenWidth, temp0, 0)
+
+				// Prevent the fullscreen option from breaking
+				CallNativeFunction(GetWindowFullScreen)
+				CallNativeFunction2(SetWindowFullScreen, checkResult, 0)
+
+				CallNativeFunction(ApplyWindowChanges)
+				break
+
+			case OPTIONS_SCREENFILTER
+				CallNativeFunction(GetWindowScaleMode)
+				temp0 = checkResult
+				temp0 ^= 1
+				CallNativeFunction2(SetWindowScaleMode, temp0, 0)
+
+				// Prevent the fullscreen option from breaking
+				CallNativeFunction(GetWindowFullScreen)
+				CallNativeFunction2(SetWindowFullScreen, checkResult, 0)
+
+				CallNativeFunction(ApplyWindowChanges)
+				break
+
+			case OPTIONS_VSYNC
+				CallNativeFunction(GetWindowVSync)
+				temp0 = checkResult
+				temp0 ^= 1
+				CallNativeFunction2(SetWindowVSync, temp0, 0)
+
+				// Prevent the fullscreen option from breaking
+				CallNativeFunction(GetWindowFullScreen)
+				CallNativeFunction2(SetWindowFullScreen, checkResult, 0)
+
+				CallNativeFunction(ApplyWindowChanges)
+				break
+
+			case OPTIONS_SPINDASH
+				if keyPress[0].left == true
+					saveRAM[35]--
+				else
+					saveRAM[35]++
+				end if
+				if saveRAM[35] < 0
+					saveRAM[35] = 2
+				end if
+
+				if saveRAM[35] > 2
+					saveRAM[35] = 0
+				end if
+				break
+
+			case OPTIONS_DROPDASH
+				saveRAM[250] ^= true
+				break
+
+			case OPTIONS_SUPERPEELOUT
+				saveRAM[251] ^= true
+				break
+
+			case OPTIONS_SHIELDTYPE
+				if keyPress[0].left == true
+					saveRAM[252]--
+				else
+					saveRAM[252]++
+				end if
+				if saveRAM[252] < 0
+					saveRAM[252] = 3
+				end if
+
+				if saveRAM[252] > 3
+					saveRAM[252] = 0
+				end if
+				break
+
+			case OPTIONS_GSPEEDCAP
+				saveRAM[253] ^= true
+				break
+
+			case OPTIONS_ASPEEDCAP
+				saveRAM[254] ^= true
+				break
+
+			case OPTIONS_SPIKEBUG
+				saveRAM[255] ^= true
+				break
+
+			case OPTIONS_REGION
+				saveRAM[256] ^= true
+				break
+
+			case OPTIONS_EXTENDEDCAMERA
+				saveRAM[257] ^= true
+				break
+
+			case OPTIONS_EMERALDCOUNT
+				saveRAM[258] ^= true
+				break
+#platform: USE_ORIGINS
+			case OPTIONS_COINMODE
+				saveRAM[259] ^= true
+				break
+#endplatform
+			end switch
+
+			WriteSaveRAM()
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		if keyPress[0].buttonB == true
+			object.state = OPTIONS_RETURNING
+		end if
+		break
+
+	case OPTIONS_FLASHOPTION
+		object.flashTimer += 3
+		object.flashTimer %= 12
+
+		object.timer++
+		if object.timer >= 36
+			object.flashTimer = 0
+			object.timer = 0
+
+			object.state = OPTIONS_CASEDEPENDANT
+		end if
+		break
+
+	case OPTIONS_CASEDEPENDANT
+
+		break
+
+	case OPTIONS_RETURNING
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.alpha -= 24
+
+		object.spikesPos.x += 8
+		temp0 = 80
+		if object.spikesPos.x >= temp0
+			if object.returning == false
+				ResetObjectEntity(1, TypeName[Main Menu], 0, 0, 0)
+				object.returning = true
+				object[1].returning = true
+				object[1].currentSelection = 2
+			end if
+		end if
+		break
+		
+	end switch
+
+	object.rotation += 2
+	object.rotation &= 511
+
+	object.spikesPos.y++
+	object.spikesPos.y %= 156
+
+	switch saveRAM[33]
+	case 0
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@0%", 0, false)
+		engine.bgmVolume = 0
+		break
+
+	case 20
+		EditMenuEntry(MENU_2, "@@@@@@@@@@20%", 0, false)
+		engine.bgmVolume = 20
+		break
+
+	case 40
+		EditMenuEntry(MENU_2, "@@@@@@@@@@40%", 0, false)
+		engine.bgmVolume = 40
+		break
+
+	case 60
+		EditMenuEntry(MENU_2, "@@@@@@@@@@60%", 0, false)
+		engine.bgmVolume = 60
+		break
+
+	case 80
+		EditMenuEntry(MENU_2, "@@@@@@@@@@80%", 0, false)
+		engine.bgmVolume = 80
+		break
+
+	case 100
+		EditMenuEntry(MENU_2, "@@@@@@@@@100%", 0, false)
+		engine.bgmVolume = 100
+		break
+		
+	end switch
+
+	switch saveRAM[34]
+	case 0
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@0%", 1, false)
+		engine.sfxVolume = 0
+		break
+
+	case 20
+		EditMenuEntry(MENU_2, "@@@@@@@@@@20%", 1, false)
+		engine.sfxVolume = 20
+		break
+
+	case 40
+		EditMenuEntry(MENU_2, "@@@@@@@@@@40%", 1, false)
+		engine.sfxVolume = 40
+		break
+
+	case 60
+		EditMenuEntry(MENU_2, "@@@@@@@@@@60%", 1, false)
+		engine.sfxVolume = 60
+		break
+
+	case 80
+		EditMenuEntry(MENU_2, "@@@@@@@@@@80%", 1, false)
+		engine.sfxVolume = 80
+		break
+
+	case 100
+		EditMenuEntry(MENU_2, "@@@@@@@@@100%", 1, false)
+		engine.sfxVolume = 100
+		break
+		
+	end switch
+
+	CallNativeFunction(GetWindowScale)
+	switch checkResult
+	case 1
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@1X", 2, false)
+		break
+
+	case 2
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@2X", 2, false)
+		break
+
+	case 3
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@3X", 2, false)
+		break
+
+	case 4
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@4X", 2, false)
+		break
+		
+	end switch
+	CallNativeFunction(GetWindowFullscreen)
+	if checkResult == true
+		EditMenuEntry(MENU_2, "@@@FULLSCREEN", 2, false)
+	end if
+
+	CallNativeFunction(GetWindowBorderless)
+	if checkResult == false
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 3, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 3, false)
+	end if
+
+	switch screen.xsize
+	default
+		EditMenuEntry(MENU_2, "@@@@@@@@@@???", 4, false)
+		break
+
+	case 320
+		EditMenuEntry(MENU_2, "@@@@@@@@@@4:3", 4, false)
+		break
+
+	case 384
+		EditMenuEntry(MENU_2, "@@@@@@@@16:10", 4, false)
+		break
+
+	case 424
+		EditMenuEntry(MENU_2, "@@@@@@@@@16:9", 4, false)
+		break
+		
+	end switch
+
+	CallNativeFunction(GetWindowScaleMode)
+	if checkResult == false
+		EditMenuEntry(MENU_2, "NEAREST NEIGHBOR", 5, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@BILINEAR", 5, false)
+	end if
+
+	CallNativeFunction(GetWindowVSync)
+	if checkResult == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 6, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 6, false)
+	end if
+
+	switch saveRAM[35]
+	case 0
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 9, false)
+		break
+
+	case 1
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@MD", 9, false)
+		break
+
+	case 2
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@CD", 9, false)
+		break
+		
+	end switch
+
+	if saveRAM[250] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 10, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 10, false)
+	end if
+
+	if saveRAM[251] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 11, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 11, false)
+	end if
+
+	switch saveRAM[252]
+	case 0
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@S1", 12, false)
+		break
+
+	case 1
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@S2", 12, false)
+		break
+
+	case 2
+		EditMenuEntry(MENU_2, "@@@@@@@@S1+S3", 12, false)
+		break
+
+	case 3
+		EditMenuEntry(MENU_2, "@@@@@@@@S2+S3", 12, false)
+		break
+		
+	end switch
+
+	if saveRAM[253] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 13, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 13, false)
+	end if
+
+	if saveRAM[254] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 14, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 14, false)
+	end if
+
+	if saveRAM[255] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 15, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 15, false)
+	end if
+
+	if saveRAM[256] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@JP", 16, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@US", 16, false)
+	end if
+
+	if saveRAM[257] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 17, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 17, false)
+	end if
+
+	if saveRAM[258] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@07", 18, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@06", 18, false)
+	end if
+
+#platform: USE_ORIGINS
+	if saveRAM[259] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 19, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 19, false)
+	end if
+#endplatform
+end event
+
+
+event ObjectDraw
+	LoadSpriteSheet("Menu/Options.gif")
+
+	if object.propertyValue == 0
+		DrawRect(0, 0, screen.xsize, screen.ysize, 0xF8, 0xF8, 0x00, 0xFF)
+
+		if object.state >= OPTIONS_SLIDEIN
+			DrawSpriteScreenXY(1, screen.xcenter, object.titlePos.y)		// "OPTIONS"
+
+			DrawSpriteScreenXY(2, 36, object.titlePos.y)				// B button + "BACK"
+
+			if object.currentSelection == OPTIONS_BACK
+				if object.flashTimer < 6
+					DrawRect(36, object.titlePos.y, 62, 2, 0xF8, 0x00, 0x00, 0xFF)
+					DrawRect(36, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+					DrawRect(96, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+					temp0 = object.titlePos.y
+					temp0 += 24
+					DrawRect(36, temp0, 62, 2, 0xF8, 0x00, 0x00, 0xFF)
+				end if
+			end if
+		end if
+	end if
+
+	if screen.xsize > 384
+		temp0 = 83
+	else
+		if screen.xsize > 320
+			temp0 = 64
+		else
+			temp0 = 43
+		end if
+	end if
+	temp1 = screen.yoffset
+	temp1 += 59
+	DrawSpriteScreenXY(3, temp0, temp1)
+	if screen.xsize <= 320
+		DrawSpriteScreenXY(4, temp0, temp1)
+	end if
+
+	LoadSpriteSheet("Menu/Text.gif")
+	temp0 += 5
+	temp1 += 3
+	DrawMenu(MENU_1, temp0, temp1)
+
+	if screen.xsize > 384
+		temp0 = 361
+	else
+		if screen.xsize > 320
+			temp0 = 342
+		else
+			temp0 = 300
+		end if
+	end if
+	DrawMenu(MENU_2, temp0, temp1)
+	LoadSpriteSheet("Menu/Options.gif")
+
+	if object.propertyValue == 0
+		if object.state >= OPTIONS_SLIDEIN
+			DrawRect(0, 0, object.spikesPos.x, screen.ysize, 0x20, 0x60, 0xC0, 0xFF)
+
+			arrayPos0 = object.spikesPos.y
+			arrayPos0 /= 2
+			arrayPos0 -= 78
+			temp0 = screen.ysize
+			temp0 += 78
+			while arrayPos0 <= temp0
+				DrawSpriteScreenXY(0, object.spikesPos.x, arrayPos0)		// Spikes
+				arrayPos0 += 78
+			loop
+		end if
+	end if
+
+	object.inkEffect = INK_ALPHA
+	if screen.xsize > 384
+		temp0 = 28
+	else
+		if screen.xsize > 320
+			temp0 = 20
+		else
+			temp0 = 10
+		end if
+	end if
+
+	if engine.deviceType == STANDARD
+		temp0 = -64
+	end if
+
+	DrawSpriteScreenFX(5, FX_INK, temp0, 151)
+
+	if keyDown[0].up == true
+		DrawSpriteScreenFX(6, FX_INK, temp0, 151)
+	end if
+
+	if keyDown[0].down == true
+		DrawSpriteScreenFX(7, FX_INK, temp0, 151)
+	end if
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Menu/Options.gif")
+	
+	SpriteFrame(0, 0, 34, 78, 1, 1)			// #0 - Spikes
+	SpriteFrame(-57, 0, 114, 26, 99, 1)		// #1 - "OPTIONS"
+	SpriteFrame(0, 0, 62, 26, 36, 1)		// #2 - B button + "BACK"
+
+	SpriteFrame(0, 0, 283, 174, 36, 28)		// #3 - Box
+	SpriteFrame(260, 0, 18, 174, 320, 28)		// #4 - Box Cutoff
+
+	SpriteFrame(0, 0, 58, 58, 339, 1)		// #5 - D-Pad
+	SpriteFrame(20, 0, 18, 18, 359, 60)		// #6 - Lit Up Button
+	SpriteFrame(20, 40, 18, 18, 359, 100)		// #7 - Lit Down Button
+
+	// Setup the menu and its entries
+
+	// Left column
+	SetupMenu(MENU_1, 0, 3, 0)
+	AddMenuEntry(MENU_1, "MUSIC", false)
+	AddMenuEntry(MENU_1, "SFX", false)
+	AddMenuEntry(MENU_1, "WINDOW SCALE", false)
+	AddMenuEntry(MENU_1, "WINDOW BORDER", false)
+	AddMenuEntry(MENU_1, "SCREEN RATIO", false)
+	AddMenuEntry(MENU_1, "SCREEN FILTER", false)
+	AddMenuEntry(MENU_1, "VSYNC", false)
+	AddMenuEntry(MENU_1, " ", false)
+	AddMenuEntry(MENU_1, " ", false)
+	AddMenuEntry(MENU_1, "SPINDASH", false)
+	AddMenuEntry(MENU_1, "DROPDASH", false)
+	AddMenuEntry(MENU_1, "SUPER PEELOUT", false)
+	AddMenuEntry(MENU_1, "SHIELD TYPE", false)
+	AddMenuEntry(MENU_1, "G. SPEED CAP", false)
+	AddMenuEntry(MENU_1, "A. SPEED CAP", false)
+	AddMenuEntry(MENU_1, "SPIKE BUG", false)
+	AddMenuEntry(MENU_1, "REGION", false)
+	AddMenuEntry(MENU_1, "EXTENDED CAMERA", false)
+	AddMenuEntry(MENU_1, "EMERALD COUNT", false)
+	AddMenuEntry(MENU_1, "@@@@@@@@@", false)
+#platform: USE_ORIGINS
+	EditMenuEntry(MENU_1, "COIN MODE", 19, false)
+#endplatform
+
+	// Right column
+	SetupMenu(MENU_2, 0, 3, 1)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, " ", false)
+	AddMenuEntry(MENU_2, " ", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+
+	menu1.selection = 0
+	menu2.selection = 0
+end event
+
+
+// ========================
+// Editor Events
+// ========================
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Items.gif")
+	SpriteFrame(-24, -24, 48, 48, 207, 1)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<game xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <palette />
+  <objects>
+    <object name="Pause Menu" script="Global/PauseMenu.txt" forceLoad="true" />
+    <object name="Time Post" script="Global/TimePost.txt" forceLoad="true" />
+  </objects>
+  <variables>
+    <variable name="timeAttack.zone" value="0" />
+    <variable name="timeAttack.actNum" value="0" />
+    <variable name="stage.lastMenu" value="0" />
+    <variable name="stage.quickRestart" value="0" />
+    <variable name="options.dropdash" value="0" />
+    <variable name="options.superPeelout" value="0" />
+    <variable name="options.extendedCamera" value="0" />
+    <variable name="options.devMenuFlag" value="0" />
+    <variable name="engine.standalone" value="0" />
+    <variable name="GetAchievementCount" value="0" />
+    <variable name="GetAchievement" value="0" />
+    <variable name="GetWindowScale" value="0" />
+    <variable name="SetWindowScale" value="0" />
+    <variable name="GetWindowFullScreen" value="0" />
+    <variable name="SetWindowFullScreen" value="0" />
+    <variable name="GetScreenWidth" value="0" />
+    <variable name="SetScreenWidth" value="0" />
+    <variable name="GetWindowVSync" value="0" />
+    <variable name="SetWindowVSync" value="0" />
+    <variable name="GetWindowScaleMode" value="0" />
+    <variable name="SetWindowScaleMode" value="0" />
+    <variable name="GetWindowBorderless" value="0" />
+    <variable name="SetWindowBorderless" value="0" />
+    <variable name="ApplyWindowChanges" value="0" />
+    <variable name="ExitGame" value="0" />
+  </variables>
+  <sounds>
+    <soundfx name="Coin" path="Global/Coin.wav" />
+    <soundfx name="DropDash" path="Global/DropDash.wav" />
+    <soundfx name="CD Charge" path="Global/CDCharge.wav" />
+    <soundfx name="CD Release" path="Global/CDRelease.wav" />
+    <soundfx name="Teleport" path="Global/Teleport.wav" />
+  </sounds>
+  <players />
+  <presentationStages>
+    <stage name="MENU" folder="Menu" id="1" highlight="true" />
+  </presentationStages>
+  <regularStages />
+  <specialStages />
+  <bonusStages />
+</game>

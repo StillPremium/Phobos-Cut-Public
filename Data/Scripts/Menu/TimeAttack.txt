@@ -1,0 +1,1352 @@
+// ----------------------------------
+// RSDK Project: Sonic 1
+// Script Description: Time Attack Object
+// Script Author: Nd1206
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0  : object.timer
+private alias object.value1  : object.fade
+private alias object.value2  : object.currentSelection
+private alias object.value3  : object.flashTimer
+private alias object.value4  : object.spikesPos.x
+private alias object.value5  : object.spikesPos.y
+private alias object.value6  : object.titlePos.y
+private alias object.value7  : object.returning
+private alias object.value8  : object.ghzOffset
+private alias object.value9  : object.mzOffset
+private alias object.value10 : object.syzOffset
+private alias object.value11 : object.lzOffset
+private alias object.value12 : object.scrollAmount
+private alias object.value13 : object.scrollingUp
+private alias object.value14 : object.pressedLR
+private alias object.value15 : object.pressedUD
+private alias object.value16 : object.pressedA
+private alias object.value17 : object.recordsPos
+private alias object.value18 : object.chosenAct
+private alias object.value19 : object.record1.time
+private alias object.value20 : object.record2.time
+private alias object.value21 : object.record3.time
+private alias object.value22 : object.recordsSel
+private alias object.value23 : object.backSelected
+private alias object.value24 : object.beatenRecord
+private alias object.value25 : object.bRecordFlash
+private alias object.value26 : object.bRecordTimer
+
+// States
+private alias 0  : TATTACK_INIT
+private alias 1  : TATTACK_PART1_SLIDEIN
+private alias 2  : TATTACK_PART1_CONTROLS
+private alias 3  : TATTACK_PART1_FLASHOPTION
+private alias 4  : TATTACK_PART1_SLIDEOUT
+private alias 5  : TATTACK_PART1_RETURNING
+private alias 6  : TATTACK_PART2_SLIDEIN
+private alias 7  : TATTACK_PART2_CONTROLS
+private alias 8  : TATTACK_PART2_FLASHOPTION
+private alias 9  : TATTACK_PART2_SWITCHACT
+private alias 10 : TATTACK_PART2_LOADSTAGE
+private alias 11 : TATTACK_PART2_RETURNING
+private alias 12 : TATTACK_PART2_PROCESSTIME
+
+// Selections
+private alias 12 : TATTACK_BACK
+
+// Game Mode Aliases
+private alias 0 : MODE_NOSAVE
+private alias 1 : MODE_SAVEGAME
+private alias 2 : MODE_TIMEATTACK
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	if object.state != TATTACK_PART1_RETURNING
+		CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+		if checkResult > -1
+			options.physicalControls = false
+		end if
+	else
+		options.physicalControls = true
+	end if
+
+	if options.physicalControls == false
+		temp0 = screen.xcenter
+		temp0 -= 56
+		CheckTouchRect(0, 96, temp0, screen.ysize)
+		if checkResult > -1
+			arrayPos0 = checkResult
+			temp0 = touchscreen[arrayPos0].xpos
+			temp0 -= 60	
+			temp1 = touchscreen[arrayPos0].ypos
+			temp1 -= 184
+			ATan2(temp2, temp0, temp1)
+			temp2 += 0x20
+			temp2 &= 0xFF
+			temp2 >>= 6
+			switch temp2
+			case 0
+				keyDown[0].right = true
+				if object.pressedLR == false
+					keyPress[0].right |= keyDown[0].right
+				end if
+				object.pressedLR = keyDown[0].right
+				break
+
+			case 1
+				keyDown[0].down = true
+				if object.pressedUD == false
+					keyPress[0].down |= keyDown[0].down
+				end if
+				object.pressedUD = keyDown[0].down
+				break
+
+			case 2
+				keyDown[0].left = true
+				if object.pressedLR == false
+					keyPress[0].left |= keyDown[0].left
+				end if
+				object.pressedLR = keyDown[0].left
+				break
+
+			case 3
+				keyDown[0].up = true
+				if object.pressedUD == false
+				keyPress[0].up |= keyDown[0].up
+				end if
+				object.pressedUD = keyDown[0].up
+				break
+				
+			end switch
+		else
+			object.pressedLR = false
+			object.pressedUD = false
+		end if
+
+		temp0 = screen.xsize
+		temp0 -= 128
+		CheckTouchRect(temp0, 96, screen.xsize, screen.ysize)
+		if checkResult > -1
+			keyDown[0].buttonA = true
+			if object.pressedA == false
+				keyPress[0].buttonA |= keyDown[0].buttonA
+			end if
+			object.pressedA = keyDown[0].buttonA
+		else
+			object.pressedA = false
+		end if
+	end if
+
+	switch object.state
+	case TATTACK_INIT
+		object.spikesPos.x = screen.xsize
+		object.spikesPos.x += 34
+		object.titlePos.y = -26
+		object.ghzOffset = 362
+		object.mzOffset = 362
+		object.syzOffset = 362
+		object.lzOffset = 362
+		object.scale = 1024
+		object.scrollingUp = true
+		object.state++
+		if stage.lastMenu == 2
+			stage.lastMenu = 0
+
+			object.state = TATTACK_PART2_PROCESSTIME
+			object.recordsPos = 46
+			object.fade = 256
+
+			object.currentSelection = timeAttack.zone
+			object.chosenAct = timeAttack.actNum
+
+			temp2 = object.currentSelection
+			if object.currentSelection == 7
+				temp2--
+			end if
+			temp2 *= 9
+			arrayPos1 = 64
+			if object.currentSelection == 7
+				arrayPos1 += 3
+			end if
+			arrayPos1 += temp2
+
+			temp2 = object.chosenAct
+			temp2 *= 3
+			arrayPos1 += temp2
+
+			arrayPos2 = arrayPos1
+			arrayPos2++
+			arrayPos3 = arrayPos1
+			arrayPos3 += 2
+			if timeAttack.result <= saveRAM[arrayPos3]
+				object.beatenRecord = 3
+			end if
+
+			if timeAttack.result <= saveRAM[arrayPos2]
+				object.beatenRecord = 2
+			end if
+
+			if timeAttack.result <= saveRAM[arrayPos1]
+				object.beatenRecord = 1
+			end if
+
+			if object.beatenRecord == 3
+				saveRAM[arrayPos3] = timeAttack.result
+			end if
+
+			if object.beatenRecord == 2
+				saveRAM[arrayPos3] = saveRAM[arrayPos2]
+				saveRAM[arrayPos2] = timeAttack.result
+			end if
+
+			if object.beatenRecord == 1
+				saveRAM[arrayPos3] = saveRAM[arrayPos2]
+				saveRAM[arrayPos2] = saveRAM[arrayPos1]
+				saveRAM[arrayPos1] = timeAttack.result
+			end if
+
+			WriteSaveRAM()
+
+			temp2 = object.currentSelection
+			if object.currentSelection == 7
+				temp2--
+			end if
+			temp2 *= 9
+			arrayPos1 = 64
+			if object.currentSelection == 7
+				arrayPos1 += 3
+			end if
+			arrayPos1 += temp2
+
+			temp2 = object.chosenAct
+			temp2 *= 3
+			arrayPos1 += temp2
+			object.record1.time = saveRAM[arrayPos1]
+			arrayPos1++
+			object.record2.time = saveRAM[arrayPos1]
+			arrayPos1++
+			object.record3.time = saveRAM[arrayPos1]
+
+			object.spikesPos.x = screen.xsize
+			if screen.xsize <= 320
+				object.spikesPos.x += 16
+			end if
+
+			object.titlePos.y = 5
+
+			temp0 = object.currentSelection
+
+			if temp0 >= 5
+				temp0 = 5
+			end if
+			object.scrollAmount = temp0
+			object.scrollAmount *= 62
+			object.scrollAmount += temp0
+			object.scrollAmount += temp0
+
+			PlaySfx(SfxName[Event], false)
+
+			object.bRecordTimer = 60
+
+			SetScreenFade(0, 0, 0, 255)
+		end if
+		break
+
+	case TATTACK_PART1_SLIDEIN
+		object.spikesPos.x -= 4
+		temp0 = screen.xsize
+		temp0 += 4
+		if screen.xsize <= 320
+			temp0 += 16
+		end if
+		if object.spikesPos.x < temp0
+			object.spikesPos.x = screen.xsize
+			if screen.xsize <= 320
+				object.spikesPos.x += 16
+			end if
+		end if
+
+		object.ghzOffset -= 24
+		if object.ghzOffset < 24
+			object.ghzOffset = 0
+		end if
+
+		if object.ghzOffset <= 240
+			object.mzOffset -= 24
+			if object.mzOffset < 24
+				object.mzOffset = 0
+			end if
+		end if
+
+		if object.mzOffset <= 240
+			object.syzOffset -= 24
+			if object.syzOffset < 24
+				object.syzOffset = 0
+			end if
+		end if
+
+		if object.syzOffset <= 240
+			object.lzOffset -= 24
+			if object.lzOffset < 24
+				object.lzOffset = 0
+				object.state++
+			end if
+		end if
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		if object.titlePos.y < 1
+			object.titlePos.y += 4
+		else
+			object.titlePos.y = 5
+		end if
+		break
+
+	case TATTACK_PART1_CONTROLS
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+		if checkResult > -1
+			options.physicalControls = false
+		end if
+
+		if options.physicalControls == false
+			CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+			if checkResult > -1
+				temp0 = object.titlePos.y
+				temp0 += 26
+				
+				CheckTouchRect(5, object.titlePos.y, 67, temp0)
+				if checkResult > -1
+					object.backSelected = true
+				else
+					if object.backSelected == true
+						object.backSelected = false
+					end if
+				end if
+			else
+				options.physicalControls = true
+
+				if object.backSelected == true
+					object.state = TATTACK_PART1_RETURNING
+				end if
+			end if
+		end if
+
+		temp0 = object.currentSelection
+		temp0--
+		if object.scrollingUp == true
+			temp0++
+		end if
+
+		if temp0 >= 5
+			temp0 = 5
+		end if
+		object.scrollAmount = temp0
+		object.scrollAmount *= 62
+		object.scrollAmount += temp0
+		object.scrollAmount += temp0
+
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		if object.titlePos.y < 1
+			object.titlePos.y += 4
+		else
+			object.titlePos.y = 5
+		end if
+
+		if keyPress[0].up == true
+			if object.currentSelection >= 1
+				options.physicalControls = true
+				object.scrollingUp = true
+
+				object.currentSelection--
+
+				object.flashTimer = 0
+
+				PlaySfx(SfxName[Score Add], false)
+			end if
+		end if
+
+		if keyPress[0].down == true
+			if object.currentSelection <= 6
+				options.physicalControls = true
+				object.scrollingUp = false
+
+				object.currentSelection++
+
+				object.flashTimer = 0
+
+				PlaySfx(SfxName[Score Add], false)
+			end if
+		end if
+
+		temp0 = keyPress[0].start
+		temp0 |= keyPress[0].buttonA
+		if temp0 == true
+			if object.backSelected == false
+				options.physicalControls = true
+
+				object.state++
+
+				PlaySfx(SfxName[Menu Select], false)
+			end if
+		end if
+
+		if keyPress[0].buttonB == true
+			options.physicalControls = true
+			object.state = TATTACK_PART1_RETURNING
+		end if
+		break
+
+	case TATTACK_PART1_FLASHOPTION
+		object.flashTimer += 3
+		object.flashTimer %= 12
+
+		object.timer++
+		if object.timer >= 36
+			object.flashTimer = 0
+			object.timer = 0
+
+			object.state = TATTACK_PART1_SLIDEOUT
+		end if
+		break
+
+	case TATTACK_PART1_SLIDEOUT
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.ghzOffset += 24
+		if object.ghzOffset > 48
+			object.mzOffset += 24
+			if object.mzOffset > 48
+				object.syzOffset += 24
+				if object.syzOffset > 48
+					object.lzOffset += 24
+					if object.lzOffset > 272
+						object.state = TATTACK_PART2_SLIDEIN
+					end if
+				end if
+			end if
+		end if
+
+		// Prepare things for the records
+		object.recordsPos = -163
+		temp2 = object.currentSelection
+		if object.currentSelection == 7
+			temp2--
+		end if
+		temp2 *= 9
+		arrayPos1 = 64
+		if object.currentSelection == 7
+			arrayPos1 += 3
+		end if
+		arrayPos1 += temp2
+		object.record1.time = saveRAM[arrayPos1]
+		arrayPos1++
+		object.record2.time = saveRAM[arrayPos1]
+		arrayPos1++
+		object.record3.time = saveRAM[arrayPos1]
+
+		object.chosenAct = 0
+		object.recordsSel = 0
+		break
+
+	case TATTACK_PART1_RETURNING
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.alpha -= 24
+
+		object.spikesPos.x -= 8
+
+		temp5 = screen.xsize
+		temp5 -= 40
+		if object.spikesPos.x == temp5
+			ResetObjectEntity(1, TypeName[Extras], 1, 0, 0)
+			object[1].drawOrder = 6
+			object[1].state = 47
+		end if
+
+		if object.spikesPos.x <= temp5
+			screen.xoffset = object.spikesPos.x
+			screen.xoffset -= screen.xsize
+
+			object[1].flashTimer++
+			object[1].flashTimer %= 12
+		end if
+
+		if object.spikesPos.x <= 0
+			ResetObjectEntity(0, TypeName[Extras], 0, 0, 0)
+			object[0].flashTimer = object[1].flashTimer
+			object[0].currentSelection = object[1].currentSelection
+			screen.xoffset = 0
+
+			ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
+		end if
+		break
+
+	case TATTACK_PART2_SLIDEIN
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.recordsPos += 8
+		if object.recordsPos >= 46
+			object.recordsPos = 46
+			object.state++
+		end if
+		object.ghzOffset = 362
+		object.mzOffset = 362
+		object.syzOffset = 362
+		object.lzOffset = 362
+		break
+
+	case TATTACK_PART2_CONTROLS
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		object.bRecordTimer--
+		if object.bRecordTimer < 0
+			object.bRecordTimer = 0
+		else
+			object.bRecordFlash++
+			object.bRecordFlash %= 6
+		end if
+
+		CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+		if checkResult > -1
+			options.physicalControls = false
+		end if
+
+		if options.physicalControls == false
+			CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+			if checkResult > -1
+				temp0 = object.titlePos.y
+				temp0 += 26
+				
+				CheckTouchRect(5, object.titlePos.y, 67, temp0)
+				if checkResult > -1
+					object.backSelected = true
+				else
+					if object.backSelected == true
+						object.backSelected = false
+					end if
+				end if
+			else
+				options.physicalControls = true
+
+				if object.backSelected == true
+					object.state = TATTACK_PART2_RETURNING
+				end if
+			end if
+		end if
+
+		temp0 = keyPress[0].left
+		temp0 |= keyPress[0].right
+		if temp0 == true
+			options.physicalControls = true
+			object.recordsSel ^= true
+
+			object.flashTimer = 0
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		temp0 = keyPress[0].buttonA
+		temp0 |= keyPress[0].start
+		if temp0 == true
+			options.physicalControls = true
+			if object.recordsSel == 0
+				object.state = TATTACK_PART2_FLASHOPTION
+				PlaySfx(SfxName[Menu Select], false)
+			else
+				if object.currentSelection != 6
+					object.state = TATTACK_PART2_SWITCHACT
+				else
+					PlaySfx(SfxName[Score Add], false)
+				end if
+			end if
+		end if
+
+		if keyPress[0].buttonB == true
+			options.physicalControls = true
+			object.state = TATTACK_PART2_RETURNING
+		end if
+		object.xpos = 0
+		object.xvel = 0
+		break
+
+	case TATTACK_PART2_FLASHOPTION
+		object.flashTimer += 3
+		object.flashTimer %= 12
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		object.bRecordTimer--
+		if object.bRecordTimer < 0
+			object.bRecordTimer = 0
+		else
+			object.bRecordFlash++
+			object.bRecordFlash %= 6
+		end if
+
+		object.timer++
+		if object.timer >= 36
+			object.flashTimer = 0
+			object.timer = 0
+
+			object.state = TATTACK_PART2_LOADSTAGE
+		end if
+		break
+
+	case TATTACK_PART2_SWITCHACT
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		object.bRecordTimer--
+		if object.bRecordTimer < 0
+			object.bRecordTimer = 0
+		else
+			object.bRecordFlash++
+			object.bRecordFlash %= 6
+		end if
+
+		if object.xpos <= 126
+			object.xvel += 0x4000
+		else
+			if object.xpos <= 128
+				object.xpos += 2
+				object.chosenAct++
+				if object.currentSelection != 7
+					object.chosenAct %= 3
+				else
+					object.chosenAct %= 6
+				end if
+
+				// Update the records for the new act
+				temp2 = object.currentSelection
+				if object.currentSelection == 7
+					temp2--
+				end if
+				temp2 *= 9
+				arrayPos1 = 64
+				if object.currentSelection == 7
+					arrayPos1 += 3
+				end if
+				arrayPos1 += temp2
+
+				temp2 = object.chosenAct
+				temp2 *= 3
+				arrayPos1 += temp2
+				object.record1.time = saveRAM[arrayPos1]
+				arrayPos1++
+				object.record2.time = saveRAM[arrayPos1]
+				arrayPos1++
+				object.record3.time = saveRAM[arrayPos1]
+			end if
+			object.xvel -= 0x4000
+		end if
+
+		temp0 = object.xvel
+		temp0 >>= 16
+		object.xpos += temp0
+		if object.xpos >= 250
+			object.xpos = 0
+			object.xvel = 0
+			object.state = TATTACK_PART2_CONTROLS
+		end if
+		break
+
+	case TATTACK_PART2_LOADSTAGE
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.bRecordTimer--
+		if object.bRecordTimer < 0
+			object.bRecordTimer = 0
+		else
+			object.bRecordFlash++
+			object.bRecordFlash %= 6
+		end if
+
+		options.gameMode = MODE_TIMEATTACK
+
+		object.fade += 8
+		music.volume -= 4
+		if object.fade >= 256
+			if object.currentSelection != 7
+				stage.activeList = REGULAR_STAGE
+				stage.listPos = object.currentSelection
+				stage.listPos *= 3
+				stage.listPos += object.chosenAct
+			else
+				stage.activeList = SPECIAL_STAGE
+				stage.listPos = object.chosenAct
+			end if
+
+			LoadStage()
+		end if
+
+		SetScreenFade(0, 0, 0, object.fade)
+		break
+
+	case TATTACK_PART2_RETURNING
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		object.bRecordTimer--
+		if object.bRecordTimer < 0
+			object.bRecordTimer = 0
+		else
+			object.bRecordFlash++
+			object.bRecordFlash %= 6
+		end if
+
+		object.recordsPos -= 8
+		if object.recordsPos <= -163
+			object.recordsPos = -163
+			object.ghzOffset -= 24
+			if object.ghzOffset < 24
+				object.ghzOffset = 0
+			end if
+
+			if object.ghzOffset <= 240
+				object.mzOffset -= 24
+				if object.mzOffset < 24
+					object.mzOffset = 0
+				end if
+			end if
+
+			if object.mzOffset <= 240
+				object.syzOffset -= 24
+				if object.syzOffset < 24
+					object.syzOffset = 0
+				end if
+			end if
+
+			if object.syzOffset <= 240
+				object.lzOffset -= 24
+				if object.lzOffset < 24
+					object.lzOffset = 0
+					object.state = TATTACK_PART1_CONTROLS
+				end if
+			end if
+		end if
+		break
+
+	case TATTACK_PART2_PROCESSTIME
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.bRecordTimer--
+		if object.bRecordTimer < 0
+			object.bRecordTimer = 0
+		else
+			object.bRecordFlash++
+			object.bRecordFlash %= 6
+		end if
+
+		if object.fade > 3
+			object.fade -= 8
+			SetScreenFade(0, 0, 0, object.fade)
+		else
+			object.fade = 0
+			object.state = TATTACK_PART2_CONTROLS
+		end if
+		break
+		
+	end switch
+
+	object.rotation += 2
+	object.rotation &= 511
+
+	object.spikesPos.y--
+	if object.spikesPos.y < 0
+		object.spikesPos.y = 156
+	end if
+end event
+
+
+event ObjectDraw
+	SetActivePalette(3, 0, screen.ysize)
+	LoadSpriteSheet("Menu/TimeAttack.gif")
+
+	if object.propertyValue == 0
+		DrawRect(0, 0, screen.xsize, screen.ysize, 0x2D, 0x99, 0x23, 0xFF)
+	end if
+
+	CheckLower(object.state, TATTACK_PART2_SLIDEIN)
+	temp0 = checkResult
+	CheckEqual(object.state, TATTACK_PART2_RETURNING)
+	temp0 |= checkResult
+	if temp0 == true
+		temp0 = screen.xsize
+		temp0 -= 257
+
+
+		temp0 = screen.xcenter
+		temp0 -= 111
+
+
+		temp1 = camera[0].ypos
+		temp1 += 50
+		temp1 -= object.scrollAmount
+
+		arrayPos0 = 0
+		while arrayPos0 < 8
+			temp2 = arrayPos0
+			temp2 -= object.currentSelection
+			Abs(temp2)
+			if temp2 == 0
+				temp0 += object.ghzOffset
+			end if
+			if temp2 == 1
+				temp0 += object.mzOffset
+			end if
+			if temp2 == 2
+				temp0 += object.syzOffset
+			end if
+			if temp2 == 3
+				temp0 += object.lzOffset
+			end if
+			if object.state == 47
+				temp0 += screen.xsize
+			end if
+			if object.state >= TATTACK_PART1_SLIDEIN
+				DrawSpriteScreenXY(3, temp0, temp1)						// Zone Box
+
+				if object.currentSelection == arrayPos0
+					if object.backSelected == false
+						if object.flashTimer < 6
+							DrawSpriteScreenXY(4, temp0, temp1)			// Zone Box Outline
+						end if
+					end if
+				end if
+
+				LoadSpriteSheet("LevelSelect/Icons.gif")
+				SetActivePalette(1, 0, screen.ysize)
+
+				temp2 = arrayPos0
+				temp2 += 12
+				DrawSpriteScreenFX(temp2, FX_SCALE, temp0, temp1)				// Icon
+
+				LoadSpriteSheet("Menu/TimeAttack.gif")
+				SetActivePalette(3, 0, screen.ysize)
+
+				temp2 = arrayPos0
+				temp2 += 20
+				DrawSpriteScreenXY(temp2, temp0, temp1)						// Zone Name
+
+				DrawSpriteScreenXY(39, temp0, temp1)						// "TOTAL:"
+
+				temp0 += 131
+				temp1 += 46
+				temp2 = arrayPos0
+				if arrayPos0 == 7
+					temp2--
+				end if
+				temp2 *= 9
+				arrayPos1 = 64
+				if arrayPos0 == 7
+					arrayPos1 += 3
+				end if
+				arrayPos1 += temp2
+				if arrayPos0 != 6
+					arrayPos2 = arrayPos1
+					arrayPos2 += 3
+					arrayPos3 = arrayPos2
+					arrayPos3 += 3
+					temp4 = saveRAM[arrayPos3]
+					temp4 /= 6000
+					temp3 = saveRAM[arrayPos2]
+					temp3 /= 6000
+				end if
+				if arrayPos0 == 7
+					arrayPos4 = arrayPos3
+					arrayPos4 += 3
+					arrayPos5 = arrayPos4
+					arrayPos5 += 3
+					arrayPos6 = arrayPos5
+					arrayPos6 += 3
+					temp7 = saveRAM[arrayPos6]
+					temp7 /= 6000
+					temp6 = saveRAM[arrayPos5]
+					temp6 /= 6000
+					temp5 = saveRAM[arrayPos4]
+					temp5 /= 6000
+				end if
+				temp2 = saveRAM[arrayPos1]
+				temp2 /= 6000
+				if arrayPos0 != 6
+					temp2 += temp3
+					temp2 += temp4
+				end if
+				if arrayPos0 == 7
+					temp2 += temp5
+					temp2 += temp6
+					temp2 += temp7
+				end if
+
+				DrawNumbers(28, temp0, temp1, temp2, 2, 8, true)		// Minutes
+				DrawSpriteScreenXY(38, temp0, temp1)				// Timer Ticks
+
+				if arrayPos0 == 7
+					temp7 = saveRAM[arrayPos6]
+					temp7 /= 100
+					temp7 %= 60
+					temp6 = saveRAM[arrayPos5]
+					temp6 /= 100
+					temp6 %= 60
+					temp5 = saveRAM[arrayPos4]
+					temp5 /= 100
+					temp5 %= 60
+				end if
+				temp4 = saveRAM[arrayPos3]
+				temp4 /= 100
+				temp4 %= 60
+				temp3 = saveRAM[arrayPos2]
+				temp3 /= 100
+				temp3 %= 60
+				temp0 += 21
+				temp2 = saveRAM[arrayPos1]
+				temp2 /= 100
+				temp2 %= 60
+				if arrayPos0 != 6
+					temp2 += temp3
+					temp2 += temp4
+				end if
+				if arrayPos0 == 7
+					temp2 += temp5
+					temp2 += temp6
+					temp2 += temp7
+				end if
+				DrawNumbers(28, temp0, temp1, temp2, 2, 8, true)		// Seconds
+
+				if arrayPos0 == 7
+					temp7 = saveRAM[arrayPos6]
+					temp7 %= 100
+					temp6 = saveRAM[arrayPos5]
+					temp6 %= 100
+					temp5 = saveRAM[arrayPos4]
+					temp5 %= 100
+				end if
+				temp4 = saveRAM[arrayPos3]
+				temp4 %= 100
+				temp3 = saveRAM[arrayPos2]
+				temp3 %= 100
+				temp0 += 24
+				temp2 = saveRAM[arrayPos1]
+				temp2 %= 100
+				if arrayPos0 != 6
+					temp2 += temp3
+					temp2 += temp4
+				end if
+				if arrayPos0 == 7
+					temp2 += temp5
+					temp2 += temp6
+					temp2 += temp7
+				end if
+				DrawNumbers(28, temp0, temp1, temp2, 2, 8, true)		// Milliseconds
+				temp0 -= 21
+				temp0 -= 24
+				temp0 -= 131
+				temp1 -= 46
+			end if
+			temp2 = arrayPos0
+			temp2 -= object.currentSelection
+			Abs(temp2)
+			if temp2 == 0
+				temp0 -= object.ghzOffset
+			end if
+			if temp2 == 1
+				temp0 -= object.mzOffset
+			end if
+			if temp2 == 2
+				temp0 -= object.syzOffset
+			end if
+			if temp2 == 3
+				temp0 -= object.lzOffset
+			end if
+			if object.state == 47
+				temp0 -= screen.xsize
+			end if
+			temp1 += 64
+			arrayPos0++
+		loop
+	end if
+
+	if object.state >= TATTACK_PART2_SLIDEIN
+		if object.state != 47
+			temp0 = screen.xcenter
+			temp0 -= 126
+			DrawSpriteScreenXY(40, temp0, object.recordsPos)
+
+			if object.flashTimer < 6
+				if object.recordsSel == 1
+					temp0 += 64
+				end if
+				DrawSpriteScreenXY(74, temp0, object.recordsPos)
+				if object.recordsSel == 1
+					temp0 -= 64
+				end if
+			end if
+
+			temp1 = object.currentSelection
+			temp1 += 41
+			if object.currentSelection == 5
+				if object.chosenAct == 2
+					temp1 = 47
+				end if
+			end if
+			if object.currentSelection == 6
+				temp1 = 46
+			end if
+			DrawSpriteScreenXY(temp1, temp0, object.recordsPos)
+
+			temp1 = object.currentSelection
+			temp1 += 59
+			if object.currentSelection >= 6
+				temp0 += 24
+
+				if object.currentSelection == 7
+					temp0 -= 8
+				end if
+			end if
+			DrawSpriteScreenXY(temp1, temp0, object.recordsPos)
+			if object.currentSelection >= 6
+				temp0 -= 24
+
+				if object.currentSelection == 7
+					temp0 += 8
+				end if
+			end if
+
+			if object.currentSelection != 6
+				if object.currentSelection != 7
+					DrawSpriteScreenXY(67, temp0, object.recordsPos)
+				end if
+
+				temp1 = object.chosenAct
+				temp1 += 68
+				if object.currentSelection == 7
+					temp0 -= 40
+				end if
+				DrawSpriteScreenXY(temp1, temp0, object.recordsPos)
+				if object.currentSelection == 7
+					temp0 += 40
+				end if
+			end if
+
+			LoadSpriteSheet("Global/Display.gif")
+			SetActivePalette(0, 0, screen.ysize)
+
+			temp0 += 177
+			temp1 = object.recordsPos
+			temp1 += 66
+
+			arrayPos0 = 1
+			while arrayPos0 <= 3
+				switch arrayPos0
+				case 1
+					temp3 = object.record1.time
+					break
+
+				case 2
+					temp3 = object.record2.time
+					break
+
+				case 3
+					temp3 = object.record3.time
+					break
+					
+				end switch
+
+				temp2 = temp3
+				temp2 /= 6000
+				DrawNumbers(49, temp0, temp1, temp2, 2, 8, true)
+
+				temp0 += 23
+
+				temp2 = temp3
+				temp2 /= 100
+				temp2 %= 60
+				DrawNumbers(49, temp0, temp1, temp2, 2, 8, true)
+
+				temp0 += 23
+
+				temp2 = temp3
+				temp2 %= 100
+				DrawNumbers(49, temp0, temp1, temp2, 2, 8, true)
+
+				if object.bRecordTimer > 0
+					if object.bRecordFlash >= 3
+						if object.beatenRecord == arrayPos0
+							temp0 -= 56
+							DrawRect(temp0, temp1, 81, 15, 0xAD, 0xAD, 0xAD, 0xFF)
+						end if
+					end if
+				end if
+
+				temp0 = screen.xcenter
+				temp0 += 51
+				temp1 += 21
+
+				arrayPos0++
+			loop
+
+			temp0 = screen.xcenter
+			temp0 -= 126
+			temp0 += object.xpos
+			if object.xpos <= 126
+				DrawRect(0, object.recordsPos, temp0, 163, 0x2D, 0x99, 0x23, 0xFF)
+			else
+				DrawRect(temp0, object.recordsPos, screen.xsize, 163, 0x2D, 0x99, 0x23, 0xFF)
+			end if
+			DrawRect(temp0, object.recordsPos, 2, 163, 0x00, 0x00, 0x00, 0xFF)
+
+			temp0 = screen.xcenter
+			temp0 += 124
+			temp0 -= object.xpos
+			if object.xpos <= 126
+				DrawRect(temp0, object.recordsPos, screen.xsize, 163, 0x2D, 0x99, 0x23, 0xFF)
+			else
+				DrawRect(0, object.recordsPos, temp0, 163, 0x2D, 0x99, 0x23, 0xFF)
+			end if
+			DrawRect(temp0, object.recordsPos, 2, 163, 0x00, 0x00, 0x00, 0xFF)
+
+			LoadSpriteSheet("Menu/TimeAttack.gif")
+			SetActivePalette(3, 0, screen.ysize)
+		end if
+	end if
+
+	if object.propertyValue == 0
+		if object.state >= TATTACK_PART1_SLIDEIN
+			temp0 = screen.xcenter
+			if screen.xsize <= 320
+				temp0 += 16
+			end if
+			DrawSpriteScreenXY(1, temp0, object.titlePos.y)				// "Time Attack"
+
+			DrawSpriteScreenXY(2, 5, object.titlePos.y)				// B button + "BACK"
+
+			if object.backSelected == true
+				if object.flashTimer < 6
+					DrawRect(5, object.titlePos.y, 62, 2, 0xF8, 0x00, 0x00, 0xFF)
+					DrawRect(5, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+					DrawRect(65, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+					temp0 = object.titlePos.y
+					temp0 += 24
+					DrawRect(5, temp0, 62, 2, 0xF8, 0x00, 0x00, 0xFF)
+				end if
+			end if
+
+			DrawRect(object.spikesPos.x, 0, screen.xsize, screen.ysize, 0xF8, 0xF8, 0x00, 0xFF)
+
+			arrayPos0 = object.spikesPos.y
+			arrayPos0 /= 2
+			arrayPos0 -= 78
+			temp0 = screen.ysize
+			temp0 += 78
+			while arrayPos0 <= temp0
+				DrawSpriteScreenXY(0, object.spikesPos.x, arrayPos0)		// Spikes
+				arrayPos0 += 78
+			loop
+		end if
+	end if
+
+	LoadSpriteSheet("Menu/SaveSelect.gif")
+	SetActivePalette(0, 0, screen.ysize)
+
+	object.inkEffect = INK_ALPHA
+
+	temp0 = 28
+	if engine.deviceType == STANDARD
+		temp0 = -64
+	end if
+
+	DrawSpriteScreenFX(5, FX_INK, temp0, 151)
+
+	if keyDown[0].up == true
+		DrawSpriteScreenFX(6, FX_INK, temp0, 151)
+	end if
+
+	if keyDown[0].down == true
+		DrawSpriteScreenFX(7, FX_INK, temp0, 151)
+	end if
+
+	if keyDown[0].left == true
+		DrawSpriteScreenFX(8, FX_INK, temp0, 151)
+	end if
+
+	if keyDown[0].right == true
+		DrawSpriteScreenFX(9, FX_INK, temp0, 151)
+	end if
+
+	temp0 = screen.xsize
+	temp0 -= 64
+
+	if engine.deviceType == STANDARD
+		temp0 = -64
+	end if
+
+	DrawSpriteScreenFX(10, FX_INK, temp0, 151)
+
+	if keyDown[0].buttonA == true
+		DrawSpriteScreenFX(11, FX_INK, temp0, 151)
+	end if
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Menu/TimeAttack.gif")
+	
+	SpriteFrame(-34, 0, 34, 78, 1, 1)			// #0  - Spikes
+	SpriteFrame(-88, 0, 177, 26, 99, 1)			// #1  - "TIME ATTACK"
+	SpriteFrame(0, 0, 62, 26, 36, 1)			// #2  - B button + "BACK"
+
+	SpriteFrame(0, 0, 222, 60, 1, 81)			// #3  - Zone Box
+	SpriteFrame(0, 0, 222, 60, 1, 564)			// #4  - Zone Box Outline
+
+	SpriteFrame(0, 0, 58, 58, 312, 124)			// #5  - D-Pad
+	SpriteFrame(20, 0, 18, 18, 332, 183)			// #6  - Lit Up Button
+	SpriteFrame(20, 40, 18, 18, 332, 223)			// #7  - Lit Down Button
+	SpriteFrame(0, 20, 18, 18, 312, 203)			// #8  - Lit Left Button
+	SpriteFrame(40, 20, 18, 18, 352, 203)			// #9  - Lit Right Button
+
+	SpriteFrame(0, 17, 24, 24, 371, 124)			// #10 - A Button
+	SpriteFrame(0, 17, 24, 24, 371, 149)			// #11 - Lit A Button
+
+	SpriteFrame(3, 3, 32, 24, 1, 85)			// #12 - GHZ Icon
+	SpriteFrame(3, 3, 32, 24, 34, 85)			// #13 - MZ Icon
+	SpriteFrame(3, 3, 32, 24, 67, 85)			// #14 - SYZ Icon
+	SpriteFrame(3, 3, 32, 24, 100, 85)			// #15 - LZ Icon
+	SpriteFrame(3, 3, 32, 24, 133, 85)			// #16 - SLZ Icon
+	SpriteFrame(3, 3, 32, 24, 166, 85)			// #17 - SBZ Icon
+	SpriteFrame(3, 3, 32, 24, 199, 85)			// #18 - FZ Icon
+	SpriteFrame(3, 3, 32, 24, 180, 60)			// #19 - SS Icon
+
+	SpriteFrame(74, 7, 78, 34, 1, 142)			// #20 - "GREEN HILL"
+	SpriteFrame(74, 7, 95, 16, 80, 142)			// #21 - "MARBLE"
+	SpriteFrame(74, 7, 86, 34, 176, 142)			// #22 - "SPRING YARD"
+	SpriteFrame(74, 7, 134, 16, 1, 177)			// #23 - "LABYRINTH"
+	SpriteFrame(74, 7, 86, 34, 136, 177)			// #24 - "STAR LIGHT"
+	SpriteFrame(74, 7, 86, 34, 1, 212)			// #25 - "SCRAP BRAIN"
+	SpriteFrame(74, 7, 70, 16, 88, 212)			// #26 - "FINAL"
+	SpriteFrame(74, 7, 100, 34, 159, 212)			// #27 - "SPECIAL STAGE"
+
+	arrayPos0 = 89
+	while arrayPos0 <= 161
+		SpriteFrame(0, 0, 8, 7, arrayPos0, 73)		// #28 to #37 - Small Numbers
+		arrayPos0 += 8
+	loop
+
+	SpriteFrame(9, 0, 27, 4, 170, 73)			// #38 - Timer Ticks
+	SpriteFrame(75, 46, 45, 7, 198, 73)			// #39 - "TOTAL:"
+
+	SpriteFrame(0, 0, 252, 163, 1, 247)			// #40 - Big Box
+
+	arrayPos0 = 1
+	while arrayPos0 <= 457
+		SpriteFrame(6, 6, 113, 151, 277, arrayPos0)	// #41 to #44 - Big Icons
+
+		arrayPos0 += 152
+	loop
+
+	arrayPos0 = 1
+	while arrayPos0 <= 457
+		SpriteFrame(6, 6, 113, 151, 391, arrayPos0)	// #45 to #48 - Big Icons
+
+		arrayPos0 += 152
+	loop
+
+	SpriteFrame(0, 0, 8, 11, 1, 50) 			// #49 - Big Number 0
+	SpriteFrame(0, 0, 8, 11, 10, 50) 			// #50 - Big Number 1
+	SpriteFrame(0, 0, 8, 11, 19, 50) 			// #51 - Big Number 2
+	SpriteFrame(0, 0, 8, 11, 28, 50) 			// #52 - Big Number 3
+	SpriteFrame(0, 0, 8, 11, 1, 62) 			// #53 - Big Number 4
+	SpriteFrame(0, 0, 8, 11, 10, 62) 			// #54 - Big Number 5
+	SpriteFrame(0, 0, 8, 11, 19, 62) 			// #55 - Big Number 6
+	SpriteFrame(0, 0, 8, 11, 28, 62) 			// #56 - Big Number 7
+	SpriteFrame(0, 0, 8, 11, 1, 74) 			// #57 - Big Number 8
+	SpriteFrame(0, 0, 8, 11, 10, 74) 			// #58 - Big Number 9
+
+	arrayPos0 = 411
+	while arrayPos0 <= 530
+		SpriteFrame(126, 8, 48, 16, 1, arrayPos0)	// #59 to #66 - Zone Acronyms
+
+		arrayPos0 += 17
+	loop
+
+	SpriteFrame(177, 8, 56, 16, 1, 547) 			// #67 - "- ACT"
+	SpriteFrame(237, 8, 7, 16, 58, 547) 			// #68 - Yellow 1
+	SpriteFrame(237, 8, 11, 16, 66, 547) 			// #69 - Yellow 2
+	SpriteFrame(237, 8, 11, 16, 78, 547) 			// #70 - Yellow 3
+	SpriteFrame(237, 8, 11, 16, 90, 547) 			// #71 - Yellow 4
+	SpriteFrame(237, 8, 11, 16, 102, 547) 			// #72 - Yellow 5
+	SpriteFrame(237, 8, 11, 16, 114, 547) 			// #73 - Yellow 6
+
+	SpriteFrame(134, 135, 40, 21, 50, 411) 			// #74 - Small Button Outline
+
+	LoadPalette("TimeAttack.act", 3, 0, 0, 256)
+
+	arrayPos0 = 64
+	while arrayPos0 <= 136
+		if saveRAM[arrayPos0] == 0		// Empty time?
+			saveRAM[arrayPos0] = 60000	// Set it to ten minutes
+		end if
+
+		arrayPos0++
+	loop
+end event
+
+// ========================
+// Editor Events
+// ========================
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Items.gif")
+	SpriteFrame(-24, -24, 48, 48, 207, 1)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event

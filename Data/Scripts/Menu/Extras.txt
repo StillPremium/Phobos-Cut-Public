@@ -1,0 +1,508 @@
+// ----------------------------------
+// RSDK Project: Sonic 1
+// Script Description: Extras Object
+// Script Author: Nd1206
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.timer
+private alias object.value1 : object.fade
+private alias object.value2 : object.currentSelection
+private alias object.value3 : object.flashTimer
+private alias object.value4 : object.spikesPos.x
+private alias object.value5 : object.spikesPos.y
+private alias object.value6 : object.titlePos.y
+private alias object.value7 : object.returning
+private alias object.value8 : object.gSpikesPos
+
+// States
+private alias 0 : EXTRAS_INIT
+private alias 1 : EXTRAS_SLIDEIN
+private alias 2 : EXTRAS_CONTROLS
+private alias 3 : EXTRAS_FLASHOPTION
+private alias 4 : EXTRAS_CASEDEPENDANT
+private alias 5 : EXTRAS_RETURNING
+
+// Options
+private alias 0 : EXTRAS_TIMEATTACK
+private alias 1 : EXTRAS_ACHIEVEMENTS
+private alias 2 : EXTRAS_STAGESELECT
+private alias 3 : EXTRAS_BACK
+
+// Game Mode Aliases
+private alias 0 : MODE_NOSAVE
+private alias 1 : MODE_SAVEGAME
+private alias 2 : MODE_TIMEATTACK
+
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	switch object.state
+	case EXTRAS_INIT
+		object.spikesPos.x = -34
+		object.titlePos.y = -26
+		object.gSpikesPos = -80
+		object.state++
+		break
+
+	case EXTRAS_SLIDEIN
+		object.spikesPos.x += 4
+		if object.spikesPos.x > -4
+			object.spikesPos.x = 0
+			object.state++
+		end if
+
+		if object.titlePos.y < 1
+			object.titlePos.y += 4
+		else
+			object.titlePos.y = 5
+		end if
+		break
+
+	case EXTRAS_CONTROLS
+		CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+		if checkResult > -1
+			options.physicalControls = false
+		end if
+
+		if options.physicalControls == false
+			CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+			if checkResult > -1
+				object.currentSelection = 47
+
+				if screen.xsize > 384
+					temp0 = 67
+				else
+					if screen.xsize > 320
+						temp0 = 47
+					else
+						temp0 = 30
+					end if
+				end if
+
+				temp1 = temp0
+				temp1 += 146
+
+				temp2 = screen.yoffset
+				temp2 += 37
+
+				temp3 = temp2
+				temp3 += 103
+				
+				CheckTouchRect(temp0, temp2, temp1, temp3)
+				if checkResult > -1
+					object.currentSelection = EXTRAS_TIMEATTACK
+				end if
+
+				temp2 += 110
+
+				temp3 = temp2
+				temp3 += 83
+				
+				CheckTouchRect(temp0, temp2, temp1, temp3)
+				if checkResult > -1
+					object.currentSelection = EXTRAS_ACHIEVEMENTS
+				end if
+
+				if screen.xsize > 384
+					temp0 = 246
+				else
+					if screen.xsize > 320
+						temp0 = 214
+					else
+						temp0 = 174
+					end if
+				end if
+
+				temp1 = temp0
+				temp1 += 146
+
+				temp2 = screen.yoffset
+				temp2 += 79
+
+				temp3 = temp2
+				temp3 += 94
+				
+				CheckTouchRect(temp0, temp2, temp1, temp3)
+				if checkResult > -1
+					object.currentSelection = EXTRAS_STAGESELECT
+				end if
+
+				temp0 = object.titlePos.y
+				temp0 += 26
+				
+				CheckTouchRect(36, object.titlePos.y, 98, temp0)
+				if checkResult > -1
+					object.currentSelection = EXTRAS_BACK
+				end if
+			else
+				options.physicalControls = true
+
+				if object.currentSelection != 47
+					if object.currentSelection != EXTRAS_BACK
+						object.state++
+						object.timer = 0
+						object.flashTimer = 0
+						PlaySfx(SfxName[Menu Select], 0)
+					else
+						object.state = EXTRAS_RETURNING
+					end if
+				else
+					object.currentSelection = EXTRAS_TIMEATTACK
+				end if
+			end if
+		end if
+
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		if object.titlePos.y < 1
+			object.titlePos.y += 4
+		else
+			object.titlePos.y = 5
+		end if
+
+		if keyPress[0].up == true
+			options.physicalControls = true
+
+			if object.currentSelection != EXTRAS_TIMEATTACK
+				object.currentSelection = EXTRAS_TIMEATTACK
+			else
+				object.currentSelection = EXTRAS_ACHIEVEMENTS
+			end if
+
+			object.flashTimer = 0
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		if keyPress[0].down == true
+			options.physicalControls = true
+
+			if object.currentSelection != EXTRAS_ACHIEVEMENTS
+				object.currentSelection = EXTRAS_ACHIEVEMENTS
+			else
+				object.currentSelection = EXTRAS_TIMEATTACK
+			end if
+
+			object.flashTimer = 0
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		temp0 = keyPress[0].left
+		temp0 |= keyPress[0].right
+		if temp0 == true
+			options.physicalControls = true
+
+			if object.currentSelection != EXTRAS_STAGESELECT
+				object.currentSelection = EXTRAS_STAGESELECT
+			else
+				object.currentSelection = EXTRAS_TIMEATTACK
+			end if
+
+			object.flashTimer = 0
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		temp0 = keyPress[0].start
+		temp0 |= keyPress[0].buttonA
+		if temp0 == true
+			if object.currentSelection != EXTRAS_BACK
+				if object.currentSelection != 47
+					options.physicalControls = true
+
+					object.state++
+
+					PlaySfx(SfxName[Menu Select], false)
+				end if
+			end if
+		end if
+
+		if keyPress[0].buttonB == true
+			object.state = EXTRAS_RETURNING
+		end if
+
+		if object.currentSelection == EXTRAS_TIMEATTACK
+//			SetPaletteEntry(0, 201, 0xF80000)
+		else
+			SetPaletteEntry(0, 201, 0x2D9923)
+		end if
+		break
+
+	case EXTRAS_FLASHOPTION
+		object.flashTimer += 3
+		object.flashTimer %= 12
+
+		object.timer++
+		if object.timer >= 36
+			object.flashTimer = 0
+			object.timer = 0
+
+			object.state = EXTRAS_CASEDEPENDANT
+		end if
+
+		if object.currentSelection == EXTRAS_TIMEATTACK
+//			SetPaletteEntry(0, 201, 0xF80000)
+		else
+			SetPaletteEntry(0, 201, 0x2D9923)
+		end if
+		break
+
+	case EXTRAS_CASEDEPENDANT
+		object.flashTimer += 3
+		object.flashTimer %= 12
+
+		switch object.currentSelection
+		case EXTRAS_TIMEATTACK
+			object.gSpikesPos += 16
+			temp0 = object.gSpikesPos
+			temp0 /= 2
+			if temp0 >= screen.ysize
+				ResetObjectEntity(0, TypeName[Time Attack], 0, 0, 0)
+				object[0].flashTimer = object[1].flashTimer
+
+				ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
+			end if
+			if object.gSpikesPos == 32
+				ResetObjectEntity(1, TypeName[Time Attack], 1, 0, 0)
+				object[1].state = 47
+				object[1].drawOrder = 4
+			end if
+			if object.gSpikesPos >= 32
+				camera[0].ypos = object.gSpikesPos
+				camera[0].ypos /= 2
+				camera[0].ypos -= screen.ysize
+
+				object[1].flashTimer++
+				object[1].flashTimer %= 12
+			end if
+			break
+
+		case EXTRAS_ACHIEVEMENTS
+			object.gSpikesPos += 16
+			temp0 = object.gSpikesPos
+			temp0 /= 2
+			if temp0 >= screen.ysize
+				ResetObjectEntity(0, TypeName[Achievements], 0, 0, 0)
+				object[0].flashTimer = object[1].flashTimer
+
+				ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
+			end if
+			if object.gSpikesPos == 32
+				ResetObjectEntity(1, TypeName[Achievements], 1, 0, 0)
+				object[1].state = 47
+				object[1].drawOrder = 4
+			end if
+			if object.gSpikesPos >= 32
+				camera[0].ypos = object.gSpikesPos
+				camera[0].ypos /= 2
+				camera[0].ypos -= screen.ysize
+
+				object[1].flashTimer++
+				object[1].flashTimer %= 12
+			end if
+			break
+
+		case EXTRAS_STAGESELECT
+			object.alpha += 8
+			music.volume -= 4
+
+			if object.alpha >= 256
+				stage.activeList = PRESENTATION_STAGE
+				stage.listPos = 5	// Level Select
+
+				LoadStage()
+			end if
+
+			SetScreenFade(0, 0, 0, object.alpha)
+			break
+			
+		end switch
+		break
+
+	case EXTRAS_RETURNING
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.spikesPos.x += 8
+		temp0 = 80
+		if object.spikesPos.x >= temp0
+			if object.returning == false
+				ResetObjectEntity(1, TypeName[Main Menu], 0, 0, 0)
+				object.returning = true
+				object[1].returning = true
+				object[1].currentSelection = 1
+			end if
+		end if
+		break
+		
+	end switch
+
+	object.rotation += 2
+	object.rotation &= 511
+
+	object.spikesPos.y++
+	object.spikesPos.y %= 156
+end event
+
+
+event ObjectDraw
+	if object.propertyValue == 0
+		DrawRect(0, 0, screen.xsize, screen.ysize, 0xF8, 0xF8, 0x00, 0xFF)
+
+		if object.state >= EXTRAS_SLIDEIN
+			DrawSpriteScreenXY(1, screen.xcenter, object.titlePos.y)		// "EXTRAS"
+
+			DrawSpriteScreenXY(2, 36, object.titlePos.y)				// B button + "BACK"
+
+			if object.currentSelection == EXTRAS_BACK
+				if object.flashTimer < 6
+					DrawRect(36, object.titlePos.y, 62, 2, 0xF8, 0x00, 0x00, 0xFF)
+					DrawRect(36, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+					DrawRect(96, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+					temp0 = object.titlePos.y
+					temp0 += 24
+					DrawRect(36, temp0, 62, 2, 0xF8, 0x00, 0x00, 0xFF)
+				end if
+			end if
+		end if
+	end if
+
+	if screen.xsize > 384
+		temp0 = 67
+	else
+		if screen.xsize > 320
+			temp0 = 47
+		else
+			temp0 = 30
+		end if
+	end if
+	temp0 += screen.xoffset
+	if screen.xoffset != 0
+		temp0 += screen.xsize
+	end if
+	temp1 = screen.yoffset
+	temp1 += 37
+	DrawSpriteScreenXY(3, temp0, temp1)							// Time Attack Box
+	if object.currentSelection == EXTRAS_TIMEATTACK
+		if object.flashTimer < 6
+			DrawSpriteScreenXY(6, temp0, temp1)					// Time Attack Box Outline
+		end if
+	end if
+
+	temp1 += 110
+	DrawSpriteScreenXY(4, temp0, temp1)							// Achievements Box
+	if object.currentSelection == EXTRAS_ACHIEVEMENTS
+		if object.flashTimer < 6
+			DrawSpriteScreenXY(7, temp0, temp1)					// Achievements Box Outline
+		end if
+	end if
+
+	if screen.xsize > 384
+		temp0 = 246
+	else
+		if screen.xsize > 320
+			temp0 = 214
+		else
+			temp0 = 174
+		end if
+	end if
+	temp0 += screen.xoffset
+	if screen.xoffset != 0
+		temp0 += screen.xsize
+	end if
+	temp1 = screen.yoffset
+	temp1 += 79
+	DrawSpriteScreenXY(5, temp0, temp1)							// Stage Select Box
+	if object.currentSelection == EXTRAS_STAGESELECT
+		if object.flashTimer < 6
+			DrawSpriteScreenXY(8, temp0, temp1)					// Stage Select Box Outline
+		end if
+	end if
+
+	if object.propertyValue == 0
+		if object.state >= EXTRAS_SLIDEIN
+			DrawRect(0, 0, object.spikesPos.x, screen.ysize, 0x20, 0x60, 0xC0, 0xFF)
+
+			arrayPos0 = object.spikesPos.y
+			arrayPos0 /= 2
+			arrayPos0 -= 78
+			temp0 = screen.ysize
+			temp0 += 78
+			while arrayPos0 <= temp0
+				DrawSpriteScreenXY(0, object.spikesPos.x, arrayPos0)		// Blue Spikes
+				arrayPos0 += 78
+			loop
+
+			GetPaletteEntry(0, 201, temp4)
+			temp1 = temp4
+			temp2 = temp4
+			temp3 = temp4
+
+			temp2 &= 0x00FF00
+			temp3 &= 0x0000FF
+  
+			temp1 >>= 16
+			temp2 >>= 8
+
+			arrayPos0 = object.spikesPos.y
+			arrayPos0 /= 2
+			arrayPos0 -= 78
+			arrayPos1 = object.gSpikesPos
+			arrayPos1 /= 2
+			temp0 = screen.xsize
+			temp0 += 78
+			while arrayPos0 <= temp0
+				DrawRect(0, 0, screen.xsize, arrayPos1, temp1, temp2, temp3, 0xFF)
+				DrawSpriteScreenXY(9, arrayPos0, arrayPos1)			// Green Spikes
+				arrayPos0 += 78
+			loop
+		end if
+	end if
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Menu/Extras.gif")
+	
+	SpriteFrame(0, 0, 34, 78, 1, 1)			// #0 - Blue Spikes
+	SpriteFrame(-52, 0, 104, 26, 99, 1)		// #1 - "EXTRAS"
+	SpriteFrame(0, 0, 62, 26, 36, 1)		// #2 - B button + "BACK"
+
+	SpriteFrame(0, 0, 146, 103, 36, 28)		// #3 - Time Attack Box
+	SpriteFrame(0, 0, 146, 83, 183, 28)		// #4 - Achievements Box
+	SpriteFrame(0, 0, 146, 94, 330, 28)		// #5 - Stage Select Box
+
+	SpriteFrame(0, 0, 146, 103, 36, 132)		// #6 - Time Attack Box Outline
+	SpriteFrame(0, 0, 146, 83, 183, 132)		// #7 - Achievements Box Outline
+	SpriteFrame(0, 0, 146, 94, 330, 132)		// #8 - Stage Select Box Outline
+
+	SpriteFrame(0, 0, 78, 34, 1, 236)		// #9 - Green Spikes
+end event
+
+
+// ========================
+// Editor Events
+// ========================
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Items.gif")
+	SpriteFrame(-24, -24, 48, 48, 207, 1)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event

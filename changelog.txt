@@ -1,0 +1,60 @@
+> Added a new Main Menu, with extra features like an Achievements menu, Knuckles & Tails as a player option, and extra options
+
+> Added the Super Peelout (Toggleable!)
+> Added extra animations for Super Sonic, as well as tweaking already existing Super Sonic sprites
+> Added projectile deflecting functionality for the Insta-Shield
+> Extended the period that the Insta-Shield from 7 to 14 frames, as it is in S3K
+> Restored the original Sonic 1 skidding animation for Sonic instead of his Sonic CD variant
+> Ported the dropdash from Sonic Mania, also enabling it on Standalone Sonic 1 (Toggleable!)
+
+> Added a flight cancel for Tails
+> Added extra frames for Tails' look up and down animations
+> Added tails to Tails' flailing animation
+> Gave Tails a drowning animation
+
+> Gave Knuckles the ability to jump and spindash in his glide drop and slide states
+> Gave Knuckles proper underwater super palettes
+> Gave Knuckles a second water slide animation frame
+> Made Knuckles' crescent to white instead of tan
+> Made Super Knuckles' glide accelerate faster
+
+> Fixed Amy's super palette being shifted over
+> Fixed Amy's Hammer Jump animation being offset
+> Fixed Amy's Hammer Dash being cancelled if she hit a slope
+> Fixed Super Amy's Hammer Dash causing a screen shake when it should not
+> Made Amy's Hammer Dash speed dependant on different variables (like speed shoes, super, etc)
+
+> Added the Extended Camera (Toggleable!)
+> Added the CD Spindash (Toggleable!)
+> Added Time Attack Gates
+> Added the Sonic Mania Time Attack quick restart functionality
+> Added the Sonic Mania Time Attack Act Results functionality
+> Added Act Results score tally skipping functionality
+> Fixed objects disappearing when players got crushed in the Origins gametype
+> Fixed Tails' gravity disabling when it shouldn't in Origins gametypes
+> Fixed Player 2 using super physics when touching the surface of water
+> Fixed Player 2 not displaying their max speed animation
+> Fixed the player being inable to pause in debug mode while the Origins gametype is active
+> Standardized the font on the KTE HUD text
+> Standardized the Sonic Origins COINS HUD text spacing
+> Added Amy life icon & Coins display to the Mobile HUD
+> Ported the Debug Mode Level Select pause behavior from Sonic 2 2013
+> Reworked the Debug Mode controls to function more like Sonic Mania
+> Reworked the Debug Mode position displayer to look like Sonic Origins 3K
+> Restored the original Spikes hitbox behavior
+> Restored the original Broken Monitor content sprites
+> Removed the roll jump lock
+> Gave Coins a unique sound effect
+> Made the animals inside of the Animal Prisons viewable before they're freed
+
+> Restored the original Title Screen scrolling behavior
+> Restored the prototype Marble Zone UFO Sprites
+> Made the Marble Zone Push Blocks oscillate up and down while floating across lava
+> Allowed super forms to destroy Bombs
+> Allowed the Insta-Shield to destroy Bombs
+> Added Act Results to SBZ3
+> Fixed Tails' tails not disappearing when he enters Debug Mode in Origins gametype
+> Fixed the player being able to farm Coins in the Special Stages
+> Added Level Select music
+> Added Knuckles & Tails as a player option
+> Replaced the Level Select player number with character initials

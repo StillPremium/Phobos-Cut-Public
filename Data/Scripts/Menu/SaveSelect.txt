@@ -1,0 +1,1298 @@
+// ----------------------------------
+// RSDK Project: Sonic 1
+// Script Description: Save Select Object
+// Script Author: Nd1206
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0  : object.timer
+private alias object.value1  : object.fade
+private alias object.value2  : object.currentSelection
+private alias object.value3  : object.flashTimer
+private alias object.value4  : object.spikesPos.x
+private alias object.value5  : object.spikesPos.y
+private alias object.value6  : object.titlePos.y
+private alias object.value7  : object.returning
+private alias object.value8  : object.save1Char
+private alias object.value9  : object.save2Char
+private alias object.value10 : object.save3Char
+private alias object.value11 : object.save4Char
+private alias object.value12 : object.nSaveChar
+private alias object.value13 : object.arrowFlash
+private alias object.value14 : object.deleteSel
+private alias object.value15 : object.pressedUD
+private alias object.value16 : object.pressedLR
+private alias object.value17 : object.pressedA
+private alias object.value18 : object.deleteSelected
+
+// States
+private alias 0 : SAVESEL_INIT
+private alias 1 : SAVESEL_SLIDEIN
+private alias 2 : SAVESEL_CONTROLS
+private alias 3 : SAVESEL_FLASHOPTION
+private alias 4 : SAVESEL_CREATESAVE
+private alias 5 : SAVESEL_LOADSAVE
+private alias 6 : SAVESEL_RETURNING
+private alias 7 : SAVESEL_DELETING
+private alias 8 : SAVESEL_FADEIN
+
+// Saves
+private alias 0 : SAVESEL_NOSAVE
+private alias 1 : SAVESEL_SAVE1
+private alias 2 : SAVESEL_SAVE2
+private alias 3 : SAVESEL_SAVE3
+private alias 4 : SAVESEL_SAVE4
+private alias 5 : SAVESEL_BACK
+
+// Player List Pos Aliases
+public alias 0 : PLAYER_SONIC_A
+public alias 1 : PLAYER_TAILS_A
+public alias 2 : PLAYER_KNUCKLES_A
+public alias 3 : PLAYER_SONIC_TAILS_A
+public alias 4 : PLAYER_KNUCKLES_TAILS_A
+public alias 5 : PLAYER_AMY_A
+public alias 6 : PLAYER_AMY_TAILS_A
+
+// Game Mode Aliases
+private alias 0 : MODE_NOSAVE
+private alias 1 : MODE_SAVEGAME
+private alias 2 : MODE_TIMEATTACK
+
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	if object.state != SAVESEL_RETURNING
+		CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+		if checkResult > -1
+			options.physicalControls = false
+		end if
+	else
+		options.physicalControls = true
+	end if
+
+	if options.physicalControls == false
+		temp0 = screen.xcenter
+		temp0 -= 56
+		CheckTouchRect(0, 96, temp0, screen.ysize)
+		if checkResult > -1
+			arrayPos0 = checkResult
+			temp0 = touchscreen[arrayPos0].xpos
+			temp0 -= 60	
+			temp1 = touchscreen[arrayPos0].ypos
+			temp1 -= 184
+			ATan2(temp2, temp0, temp1)
+			temp2 += 0x20
+			temp2 &= 0xFF
+			temp2 >>= 6
+			switch temp2
+			case 0
+				keyDown[0].right = true
+				if object.pressedLR == false
+					keyPress[0].right |= keyDown[0].right
+				end if
+				object.pressedLR = keyDown[0].right
+				break
+
+			case 1
+				keyDown[0].down = true
+				if object.pressedUD == false
+					keyPress[0].down |= keyDown[0].down
+				end if
+				object.pressedUD = keyDown[0].down
+				break
+
+			case 2
+				keyDown[0].left = true
+				if object.pressedLR == false
+					keyPress[0].left |= keyDown[0].left
+				end if
+				object.pressedLR = keyDown[0].left
+				break
+
+			case 3
+				keyDown[0].up = true
+				if object.pressedUD == false
+				keyPress[0].up |= keyDown[0].up
+				end if
+				object.pressedUD = keyDown[0].up
+				break
+				
+			end switch
+		else
+			object.pressedLR = false
+			object.pressedUD = false
+		end if
+
+		temp0 = screen.xsize
+		temp0 -= 128
+		CheckTouchRect(temp0, 96, screen.xsize, screen.ysize)
+		if checkResult > -1
+			keyDown[0].buttonA = true
+			if object.pressedA == false
+				keyPress[0].buttonA |= keyDown[0].buttonA
+			end if
+			object.pressedA = keyDown[0].buttonA
+		else
+			object.pressedA = false
+		end if
+	end if
+
+	switch object.state
+	case SAVESEL_INIT
+		object.spikesPos.x = -34
+		object.titlePos.y = -26
+		object.currentSelection = SAVESEL_SAVE1
+
+		if screen.xsize > 320
+			EditFrame(1, -91, 0, 182, 26, 99, 1)		// "SAVE SELECT"
+		else
+			EditFrame(1, -61, 0, 136, 26, 105, 173)		// "SAVE SEL"
+		end if
+		object.state++
+		if stage.lastMenu == 1
+			stage.lastMenu = 0
+
+			object.spikesPos.x = 0
+			object.titlePos.y = 5
+
+			object.state = SAVESEL_FADEIN
+			object.fade = 256
+
+			object.currentSelection = options.saveSlot
+			object.currentSelection++
+
+			if options.gameMode == MODE_NOSAVE
+				object.currentSelection = SAVESEL_NOSAVE
+			end if
+
+			SetScreenFade(0, 0, 0, 255)
+		end if
+		break
+
+	case SAVESEL_SLIDEIN
+		object.spikesPos.x += 4
+		if object.spikesPos.x > -4
+			object.spikesPos.x = 0
+			object.state++
+		end if
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		if object.titlePos.y < 1
+			object.titlePos.y += 4
+		else
+			object.titlePos.y = 5
+		end if
+		break
+
+	case SAVESEL_CONTROLS
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.arrowFlash++
+		object.arrowFlash %= 32
+
+		if options.physicalControls == false
+			CheckTouchRect(0, 0, screen.xsize, screen.ysize)
+			if checkResult > -1
+				temp0 = object.titlePos.y
+				temp0 += 26
+				
+				CheckTouchRect(36, object.titlePos.y, 98, temp0)
+				if checkResult > -1
+					object.currentSelection = SAVESEL_BACK
+				else
+					if object.currentSelection == SAVESEL_BACK
+						object.currentSelection = SAVESEL_SAVE1
+					end if
+				end if
+
+				arrayPos1 = object.currentSelection	// Get the save
+				arrayPos1--
+				arrayPos1 *= 8				// Get the character of that save
+				arrayPos1 += 4				// Get the stage of that save
+				CheckEqual(saveRAM[arrayPos1], 0)
+				temp1 = checkResult
+				CheckEqual(object.currentSelection, SAVESEL_NOSAVE)
+				temp1 |= checkResult
+				if temp1 == false
+					temp1 = screen.xsize
+					temp1 -= 83
+					temp2 = screen.xsize
+					temp2 -= 5
+					CheckTouchRect(temp1, object.titlePos.y, temp2, temp0)
+					if checkResult > -1
+						object.deleteSelected = true
+					else
+						object.deleteSelected = false
+					end if
+				else
+					object.deleteSelected = false
+				end if
+			else
+				options.physicalControls = true
+
+				if object.currentSelection == SAVESEL_BACK
+					object.state = SAVESEL_RETURNING
+				end if
+
+				if object.deleteSelected == true
+					object.state = SAVESEL_DELETING
+					object.deleteSelected = false
+
+					PlaySfx(SfxName[Lamp Post], false)
+				end if
+			end if
+		end if
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		if object.titlePos.y < 1
+			object.titlePos.y += 4
+		else
+			object.titlePos.y = 5
+		end if
+
+		if keyPress[0].left == true
+			object.currentSelection--
+			if object.currentSelection < SAVESEL_NOSAVE
+				object.currentSelection = SAVESEL_SAVE4
+			end if
+
+			options.physicalControls = true
+			object.flashTimer = 0
+			object.arrowFlash = 0
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		if keyPress[0].right == true
+			object.currentSelection++
+			if object.currentSelection > SAVESEL_SAVE4
+				object.currentSelection = SAVESEL_NOSAVE
+			end if
+
+			options.physicalControls = true
+			object.flashTimer = 0
+			object.arrowFlash = 0
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		arrayPos1 = object.currentSelection	// Get the save
+		arrayPos1--
+		arrayPos1 *= 8				// Get the character of that save
+		arrayPos1 += 4				// Get the stage of that save
+		CheckEqual(saveRAM[arrayPos1], 0)
+		temp0 = checkResult
+		CheckEqual(object.currentSelection, SAVESEL_NOSAVE)
+		temp0 |= checkResult
+		if temp0 == true
+			temp0 = PLAYER_KNUCKLES_TAILS_A
+#platform: USE_ORIGINS
+			if game.hasPlusDLC == true
+				temp0 = PLAYER_AMY_TAILS_A
+			end if
+#endplatform
+
+			if keyPress[0].up == true
+				switch object.currentSelection
+				case SAVESEL_NOSAVE
+					object.nSaveChar++
+					if object.nSaveChar > temp0
+						object.nSaveChar = PLAYER_SONIC_A
+					end if
+					break
+
+				case SAVESEL_SAVE1
+					object.save1Char++
+					if object.save1Char > temp0
+						object.save1Char = PLAYER_SONIC_A
+					end if
+					break
+
+				case SAVESEL_SAVE2
+					object.save2Char++
+					if object.save2Char > temp0
+						object.save2Char = PLAYER_SONIC_A
+					end if
+					break
+
+				case SAVESEL_SAVE3
+					object.save3Char++
+					if object.save3Char > temp0
+						object.save3Char = PLAYER_SONIC_A
+					end if
+					break
+
+				case SAVESEL_SAVE4
+					object.save4Char++
+					if object.save4Char > temp0
+						object.save4Char = PLAYER_SONIC_A
+					end if
+					break
+					
+				end switch
+
+				PlaySfx(SfxName[Score Add], false)
+			end if
+
+			if keyPress[0].down == true
+				switch object.currentSelection
+				case SAVESEL_NOSAVE
+					object.nSaveChar--
+					if object.nSaveChar < PLAYER_SONIC_A
+						object.nSaveChar = temp0
+					end if
+					break
+
+				case SAVESEL_SAVE1
+					object.save1Char--
+					if object.save1Char < PLAYER_SONIC_A
+						object.save1Char = temp0
+					end if
+					break
+
+				case SAVESEL_SAVE2
+					object.save2Char--
+					if object.save2Char < PLAYER_SONIC_A
+						object.save2Char = temp0
+					end if
+					break
+
+				case SAVESEL_SAVE3
+					object.save3Char--
+					if object.save3Char < PLAYER_SONIC_A
+						object.save3Char = temp0
+					end if
+					break
+
+				case SAVESEL_SAVE4
+					object.save4Char--
+					if object.save4Char < PLAYER_SONIC_A
+						object.save4Char = temp0
+					end if
+					break
+					
+				end switch
+
+				PlaySfx(SfxName[Score Add], false)
+			end if
+		else
+			if keyPress[0].buttonX == true
+				object.state = SAVESEL_DELETING
+
+				PlaySfx(SfxName[Lamp Post], false)
+			end if
+		end if
+
+		object.deleteSel = false
+
+		temp0 = keyPress[0].start
+		temp0 |= keyPress[0].buttonA
+		if temp0 == true
+			object.state++
+			StopMusic()
+
+			PlaySfx(SfxName[Menu Select], false)
+		end if
+
+		if keyPress[0].buttonB == true
+			options.physicalControls = true
+			object.state = SAVESEL_RETURNING
+		end if
+		break
+
+	case SAVESEL_FLASHOPTION
+		object.flashTimer += 3
+		object.flashTimer %= 12
+
+		object.arrowFlash++
+		object.arrowFlash %= 32
+
+		if object.alpha < 250
+			object.alpha += 8
+		else
+			object.alpha = 255
+		end if
+
+		object.timer++
+		if object.timer >= 36
+			object.flashTimer = 0
+			object.timer = 0
+			arrayPos1 = object.currentSelection	// Get the save
+			arrayPos1--
+			arrayPos1 *= 8				// Get the character of that save
+			arrayPos1 += 4				// Get the stage of that save
+
+			CheckEqual(saveRAM[arrayPos1], 0)
+			temp0 = checkResult
+			CheckEqual(object.currentSelection, SAVESEL_NOSAVE)
+			temp0 |= checkResult
+			if temp0 == true
+				object.state = SAVESEL_CREATESAVE
+			else
+				object.state = SAVESEL_LOADSAVE
+			end if
+		end if
+		break
+
+	case SAVESEL_CREATESAVE
+		object.flashTimer += 3
+		object.flashTimer %= 12
+
+		object.arrowFlash++
+		object.arrowFlash %= 32
+
+		object.fade += 8
+
+		if object.fade >= 256
+			arrayPos1 = object.currentSelection	// Get the save
+			arrayPos1--
+
+			arrayPos1 *= 8				// Get the character of that save
+
+			switch object.currentSelection
+			case SAVESEL_NOSAVE
+				temp0 = object.nSaveChar
+				break
+
+			case SAVESEL_SAVE1
+				temp0 = object.save1Char
+				break
+
+			case SAVESEL_SAVE2
+				temp0 = object.save2Char
+				break
+
+			case SAVESEL_SAVE3
+				temp0 = object.save3Char
+				break
+
+			case SAVESEL_SAVE4
+				temp0 = object.save4Char
+				break
+				
+			end switch
+
+			saveRAM[arrayPos1] = temp0
+			stage.playerListPos = temp0
+
+			arrayPos1++				// Get the lives of that save
+			saveRAM[arrayPos1] = 3
+			player.lives = 3
+
+			arrayPos1++				// Get the score of that save
+			saveRAM[arrayPos1] = 0
+			player.score = 0
+
+			arrayPos1++				// Get the score bonus of that save
+			saveRAM[arrayPos1] = 50000
+			player.scoreBonus = 50000
+
+			arrayPos1++				// Get the stage of that save
+			saveRAM[arrayPos1] = 1
+			stage.listPos = 0
+
+			arrayPos1++				// Get the emerald count of that save
+			saveRAM[arrayPos1] = 0
+			specialStage.emeralds = 0
+
+			arrayPos1++				// Get the special stage of that save
+			saveRAM[arrayPos1] = 0
+			specialStage.listPos = 0
+
+			stage.activeList = REGULAR_STAGE
+
+			options.saveSlot = object.currentSelection
+			options.saveSlot--
+			if object.currentSelection == SAVESEL_NOSAVE
+				options.gameMode = MODE_NOSAVE
+			else
+				options.gameMode = MODE_SAVEGAME
+			end if
+
+			WriteSaveRAM()
+			LoadStage()
+
+			SetScreenFade(0, 0, 0, 255)
+		end if
+
+		SetScreenFade(0, 0, 0, object.fade)
+		break
+
+	case SAVESEL_LOADSAVE
+		object.flashTimer += 3
+		object.flashTimer %= 12
+
+		object.fade += 8
+
+		if object.fade >= 256
+			arrayPos1 = object.currentSelection	// Get the save
+			arrayPos1--
+
+			arrayPos1 *= 8				// Get the character of that save
+			stage.playerListPos = saveRAM[arrayPos1]
+
+			arrayPos1++				// Get the lives of that save
+			player.lives = saveRAM[arrayPos1]
+
+			arrayPos1++				// Get the score of that save
+			player.score = saveRAM[arrayPos1]
+
+			arrayPos1++				// Get the score bonus of that save
+			player.scoreBonus = saveRAM[arrayPos1]
+
+			arrayPos1++				// Get the stage of that save
+			stage.listPos = saveRAM[arrayPos1]
+			stage.listPos--
+			if stage.listPos < 0
+				stage.listPos = 0
+				player.lives = 3
+				player.score = 0
+			end if
+
+			arrayPos1++				// Get the emerald count of that save
+			specialStage.emeralds = saveRAM[arrayPos1]
+
+			arrayPos1++				// Get the special stage of that save
+			specialStage.listPos = saveRAM[arrayPos1]
+
+			stage.activeList = REGULAR_STAGE
+
+			arrayPos1 = object.currentSelection	// Get the save
+			arrayPos1--
+			arrayPos1 *= 8				// Get the character of that save
+			arrayPos1 += 4				// Get the stage of that save
+			if saveRAM[arrayPos1] >= 80 		// Check if the save is on a special stage
+				specialStage.nextZone = saveRAM[arrayPos1]
+				specialStage.nextZone -= 129
+				stage.activeList = SPECIAL_STAGE
+#platform: USE_ORIGINS
+				stage.activeList = 3
+#endplatform
+
+				stage.listPos = specialStage.listPos
+			end if
+
+			options.saveSlot = object.currentSelection
+			options.saveSlot--
+			options.gameMode = MODE_SAVEGAME
+
+			lampPostID = 0
+
+			LoadStage()
+
+			SetScreenFade(0, 0, 0, 255)
+		end if
+
+		SetScreenFade(0, 0, 0, object.fade)
+		break
+
+	case SAVESEL_RETURNING
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.arrowFlash++
+		object.arrowFlash %= 32
+
+		object.alpha -= 24
+
+		object.spikesPos.x += 8
+		temp0 = 80
+		if object.spikesPos.x >= temp0
+			if object.returning == false
+				ResetObjectEntity(1, TypeName[Main Menu], 0, 0, 0)
+				object.returning = true
+				object[1].returning = true
+			end if
+		end if
+		break
+
+	case SAVESEL_DELETING
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		object.arrowFlash++
+		object.arrowFlash %= 32
+
+		temp0 = keyPress[0].up
+		temp0 |= keyPress[0].down
+		temp0 |= keyPress[0].left
+		temp0 |= keyPress[0].right
+		if temp0 == true
+			object.deleteSel ^= true
+
+			PlaySfx(SfxName[Score Add], false)
+		end if
+
+		temp0 = keyPress[0].start
+		temp0 |= keyPress[0].buttonA
+		if temp0 == true
+			if object.deleteSel == true
+				PlaySfx(SfxName[Lose Rings], false)
+
+				arrayPos1 = object.currentSelection	// Get the save
+				arrayPos1--
+
+				arrayPos1 *= 8				// Get the character of that save
+
+				switch object.currentSelection
+				case SAVESEL_SAVE1
+					object.save1Char = PLAYER_SONIC_A
+					break
+
+				case SAVESEL_SAVE2
+					object.save2Char = PLAYER_SONIC_A
+					break
+
+				case SAVESEL_SAVE3
+					object.save3Char = PLAYER_SONIC_A
+					break
+
+				case SAVESEL_SAVE4
+					object.save4Char = PLAYER_SONIC_A
+					break
+					
+				end switch
+
+				saveRAM[arrayPos1] = PLAYER_SONIC_A
+
+				arrayPos1++				// Get the lives of that save
+				saveRAM[arrayPos1] = 3
+
+				arrayPos1++				// Get the score of that save
+				saveRAM[arrayPos1] = 0
+
+				arrayPos1++				// Get the score bonus of that save
+				saveRAM[arrayPos1] = 50000
+
+				arrayPos1++				// Get the stage of that save
+				saveRAM[arrayPos1] = 0
+
+				arrayPos1++				// Get the emerald count of that save
+				saveRAM[arrayPos1] = 0
+
+				arrayPos1++				// Get the special stage of that save
+				saveRAM[arrayPos1] = 0
+
+				WriteSaveRAM()
+			else
+				PlaySfx(SfxName[Lamp Post], false)
+			end if
+
+			object.state = SAVESEL_CONTROLS
+		end if
+		break
+
+	case SAVESEL_FADEIN
+		object.flashTimer++
+		object.flashTimer %= 12
+
+		if object.fade > 3
+			object.fade -= 8
+			SetScreenFade(0, 0, 0, object.fade)
+		else
+			object.fade = 0
+			object.state = SAVESEL_CONTROLS
+		end if
+		break
+		
+	end switch
+
+	object.rotation += 2
+	object.rotation &= 511
+
+	object.spikesPos.y++
+	object.spikesPos.y %= 156
+
+	object.rotation = 256
+end event
+
+
+event ObjectDraw
+	LoadSpriteSheet("Menu/SaveSelect.gif")
+
+	if object.propertyValue == 0
+		DrawRect(0, 0, screen.xsize, screen.ysize, 0xF8, 0xF8, 0x00, 0xFF)
+
+		if object.state >= SAVESEL_SLIDEIN
+			DrawSpriteScreenXY(1, screen.xcenter, object.titlePos.y)		// "SAVE SELECT"
+
+			DrawSpriteScreenXY(18, 36, object.titlePos.y)				// B button + "BACK"
+
+			if object.currentSelection == SAVESEL_BACK
+				if object.flashTimer < 6
+					DrawRect(36, object.titlePos.y, 62, 2, 0xF8, 0x00, 0x00, 0xFF)
+					DrawRect(36, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+					DrawRect(96, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+					temp0 = object.titlePos.y
+					temp0 += 24
+					DrawRect(36, temp0, 62, 2, 0xF8, 0x00, 0x00, 0xFF)
+				end if
+			end if
+
+			arrayPos1 = object.currentSelection	// Get the save
+			arrayPos1--
+			arrayPos1 *= 8				// Get the character of that save
+			arrayPos1 += 4				// Get the stage of that save
+			CheckEqual(saveRAM[arrayPos1], 0)
+			temp0 = checkResult
+			CheckEqual(object.currentSelection, SAVESEL_NOSAVE)
+			temp0 |= checkResult
+			if temp0 == false
+				DrawSpriteScreenXY(69, screen.xsize, object.titlePos.y)			// X button + "DELETE"
+
+				if object.deleteSelected == true
+					if object.flashTimer < 6
+						temp1 = screen.xsize
+						temp1 -= 83
+						temp2 = screen.xsize
+						temp2 -= 7
+
+						DrawRect(temp1, object.titlePos.y, 78, 2, 0xF8, 0x00, 0x00, 0xFF)
+						DrawRect(temp1, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+						DrawRect(temp2, object.titlePos.y, 2, 26, 0xF8, 0x00, 0x00, 0xFF)
+
+						temp0 = object.titlePos.y
+						temp0 += 24
+						DrawRect(temp1, temp0, 78, 2, 0xF8, 0x00, 0x00, 0xFF)
+					end if
+				end if
+			end if
+		end if
+	end if
+
+	temp0 = 45
+	temp1 = screen.yoffset
+	temp1 += 62
+	if screen.xsize <= 384
+		temp0 = screen.xcenter
+		temp0 -= 34
+		temp1 = screen.yoffset
+		temp1 += 35
+	end if
+	DrawSpriteScreenXY(2, temp0, temp1)							// No Save Box
+
+	if object.currentSelection == SAVESEL_NOSAVE
+		if object.flashTimer < 6
+			DrawSpriteScreenXY(15, temp0, temp1)					// No Save Box Outline
+		end if
+	end if
+
+	temp2 = object.nSaveChar
+	temp2 += 8
+	temp1 -= 36
+
+	if object.currentSelection == SAVESEL_NOSAVE
+		if object.arrowFlash < 16
+			temp0 += 33
+			temp1 += 30
+			DrawSpriteScreenXY(17, temp0, temp1)					// Blue Arrow
+			temp1 += 34
+			temp1 += 28
+
+			DrawSpriteScreenFX(17, FX_ROTATE, temp0, temp1)				// Blue Arrow
+			temp0 -= 33
+			temp1 -= 34
+			temp1 -= 30
+			temp1 -= 28
+		end if
+	end if
+
+	DrawSpriteScreenXY(temp2, temp0, temp1)							// Character portrait
+	temp1 += 36
+
+	temp0 += 74
+
+	if screen.xsize <= 384
+		if screen.xsize > 320
+			temp0 = 50
+		else
+			temp0 = 40
+		end if
+		temp1 = screen.yoffset
+		temp1 += 106
+	end if
+
+	arrayPos0 = 0
+	while arrayPos0 < 4
+		DrawSpriteScreenXY(3, temp0, temp1)						// Save Box
+
+		arrayPos0++
+		if object.currentSelection == arrayPos0
+			if object.deleteSelected == false
+				if object.flashTimer < 6
+					DrawSpriteScreenXY(16, temp0, temp1)			// Save Box Outline
+				end if
+			end if
+		end if
+		arrayPos0--
+
+		arrayPos1 = arrayPos0			// Get the save
+		arrayPos1 *= 8				// Get the character of that save
+		arrayPos1 += 4				// Get the stage of that save
+		if saveRAM[arrayPos1] == 0
+			temp1 -= 18
+
+			temp0 += 16
+			temp1 += 20
+			DrawRect(temp0, temp1, 37, 20, 0xAD, 0xAD, 0xAD, 0xFF)
+			temp0 -= 16
+			temp1 -= 20
+
+			arrayPos0++
+			if object.currentSelection == arrayPos0
+				if object.arrowFlash < 16
+					temp0 += 33
+					temp1 += 30
+					DrawSpriteScreenXY(17, temp0, temp1)			// Blue Arrow
+					temp1 += 34
+					temp1 += 28
+
+					DrawSpriteScreenFX(17, FX_ROTATE, temp0, temp1)		// Blue Arrow
+					temp0 -= 33
+					temp1 -= 34
+					temp1 -= 30
+					temp1 -= 28
+				end if
+			end if
+			arrayPos0--
+		end if
+
+		arrayPos2 = arrayPos0			// Get the save
+		arrayPos2 *= 8				// Get the character of that save
+
+		temp2 = saveRAM[arrayPos2]
+		if saveRAM[arrayPos1] == 0
+			arrayPos0++
+			switch arrayPos0
+			case SAVESEL_SAVE1
+				temp2 = object.save1Char
+				break
+
+			case SAVESEL_SAVE2
+				temp2 = object.save2Char
+				break
+
+			case SAVESEL_SAVE3
+				temp2 = object.save3Char
+				break
+
+			case SAVESEL_SAVE4
+				temp2 = object.save4Char
+				break
+				
+			end switch
+			arrayPos0--
+		end if
+		temp2 += 8
+		DrawSpriteScreenXY(temp2, temp0, temp1)						// Character portrait
+
+		if saveRAM[arrayPos1] == 0
+			temp1 += 18
+		end if
+
+		temp2 = saveRAM[arrayPos1]				// Get the stage the save is at
+		temp2--							// Offset it by -1 (Makes up for NEW SAVE taking up stage slot 0)
+		temp2 /= 3						// Divide it by 3 so one zone icon sprite covers three stages
+		temp2 += 20						// Offset it to where the zone icon spriteframes are
+
+		if saveRAM[arrayPos1] == 0				// Is this save unused?
+			temp2 = 19					// Force the icon to the NEW SAVE Icon
+		end if
+
+		if saveRAM[arrayPos1] >= 20				// Has the player completed the game?
+			temp2 = 28					// Force the icon to the COMPLETE Icon
+		end if
+
+		if saveRAM[arrayPos1] >= 80 				// Is the save is on a special stage?
+			temp2 = 27					// Force the icon to the SPECIAL STAGE Icon
+		end if
+
+		if temp2 >= 20
+			if temp2 <= 27
+				LoadSpriteSheet("LevelSelect/Icons.gif")
+				SetActivePalette(1, 0, screen.ysize)
+			end if
+		end if
+
+		DrawSpriteScreenXY(temp2, temp0, temp1)						// Zone Icon
+
+		LoadSpriteSheet("Menu/SaveSelect.gif")
+		SetActivePalette(0, 0, screen.ysize)
+
+		temp2 = saveRAM[arrayPos1]				// Get the stage the save is at
+		temp2--							// Offset it by -1 (Makes up for NEW SAVE taking up stage slot 0)
+		temp2 /= 3						// Divide it by 3 so one zone name sprite covers three stages
+		temp2 += 30						// Offset it to where the zone name spriteframes are
+
+		if saveRAM[arrayPos1] == 0				// Is this save unused?
+			temp2 = 29					// Force the icon to the NEW SAVE Name
+		end if
+
+		if saveRAM[arrayPos1] >= 20				// Has the player completed the game?
+			temp2 = 38					// Force the icon to the COMPLETE Name
+		end if
+
+		if saveRAM[arrayPos1] >= 80 				// Is the save is on a special stage?
+			temp2 = 37					// Force the icon to the SPECIAL STAGE Name
+		end if
+
+		DrawSpriteScreenXY(temp2, temp0, temp1)						// Zone Name
+
+		if saveRAM[arrayPos1] > 0
+			// Act Number
+			CheckLower(saveRAM[arrayPos1], 19)
+			temp2 = checkResult
+			CheckGreater(saveRAM[arrayPos1], 79)
+			temp2 |= checkResult
+			if temp2 == true
+				if saveRAM[arrayPos1] >= 80
+					// Special Stage - Do the process for loading special stage numbers
+					arrayPos1 += 2			// Get the special stage of that save
+					temp2 = saveRAM[arrayPos1]	// Get the speciak stage the save is at
+					temp3 = 6
+					temp3 += saveRAM[258]
+					temp2 %= temp3			// Prevent the act number from going over the Chaos Emerald count
+					arrayPos1 -= 2			// Get the special stage of that save
+				else
+					// Regular Stage - Do the process for loading act numbers
+					temp2 = saveRAM[arrayPos1]	// Get the stage the save is at
+					temp2--				// Offset it by -1 (Makes up for NEW SAVE taking up stage slot 0)
+					temp2 %= 3			// Prevent the act number from going over 3
+				end if
+				temp2 += 39				// Offset it to where the act number spriteframes are
+
+				DrawSpriteScreenXY(temp2, temp0, temp1)				// Act Number
+			end if
+
+			switch saveRAM[arrayPos2]
+			case PLAYER_SONIC_A
+			case PLAYER_SONIC_TAILS_A
+				temp2 = 46
+				break
+
+			case PLAYER_TAILS_A
+				temp2 = 47
+				break
+
+			case PLAYER_KNUCKLES_A
+			case PLAYER_KNUCKLES_TAILS_A
+				temp2 = 48
+				break
+
+#platform: USE_ORIGINS
+			case PLAYER_AMY_A
+			case PLAYER_AMY_TAILS_A
+				temp2 = 49
+				break
+#endplatform
+			end switch
+
+			if saveRAM[arrayPos1] > 0
+				DrawSpriteScreenXY(temp2, temp0, temp1)				// Character life icon
+			end if
+
+			LoadSpriteSheet("Global/Display.gif")
+
+			DrawSpriteScreenXY(50, temp0, temp1)					// White small x icon
+
+			arrayPos2 = arrayPos0				// Get the save
+			arrayPos2 *= 8					// Get the character of that save
+			arrayPos2++					// Get the lives of that save
+			DrawNumbers(51, temp0, temp1, saveRAM[arrayPos2], 2, 8, true)		// Lives Counter
+
+			LoadSpriteSheet("Menu/SaveSelect.gif")
+		end if
+
+		arrayPos1 = arrayPos0			// Get the save
+		arrayPos1 *= 8				// Get the character of that save
+		arrayPos1 += 5				// Get the emerald count of that save
+
+		// With 7 Emeralds, the third emeralds's color changes
+		if saveRAM[258] == false
+			EditFrame(63, 40, 4, 8, 8, 192, 121) 	// Pink Emerald
+		else
+			EditFrame(63, 40, 4, 8, 8, 201, 121) 	// Purple Emerald
+		end if
+
+		if saveRAM[258] == true
+			DrawSpriteScreenXY(68, temp0, temp1)					// 7 Emerald Container
+		end if
+
+		// Chaos Emeralds
+		if saveRAM[arrayPos1] >= 0x1
+			DrawSpriteScreenXY(61, temp0, temp1)					// Blue Emerald
+
+		if saveRAM[arrayPos1] >= 0x3
+			DrawSpriteScreenXY(62, temp0, temp1)					// Yellow Emerald
+
+		if saveRAM[arrayPos1] >= 0x7
+			DrawSpriteScreenXY(63, temp0, temp1)					// Pink/Purple Emerald
+
+		if saveRAM[258] == true
+			temp0 -= 5
+		end if
+
+		if saveRAM[arrayPos1] >= 0xF
+			DrawSpriteScreenXY(64, temp0, temp1)					// Green Emerald
+
+		if saveRAM[arrayPos1] >= 0x1F
+			DrawSpriteScreenXY(65, temp0, temp1)					// Red Emerald
+
+		if saveRAM[arrayPos1] >= 0x3F
+			DrawSpriteScreenXY(66, temp0, temp1)					// Grey Emerald
+		end if
+
+		if saveRAM[258] == true
+			if saveRAM[arrayPos1] >= 0x7F
+				DrawSpriteScreenXY(67, temp0, temp1)				// Cyan Emerald
+			end if
+		end if
+
+		if saveRAM[258] == true
+			temp0 += 5
+		end if
+		end if
+		end if
+		end if
+		end if
+		end if
+
+		if object.state == SAVESEL_DELETING
+			arrayPos0++
+			if object.currentSelection == arrayPos0
+				DrawSpriteScreenXY(70, temp0, temp1)				// Delete Save Box
+
+				if object.deleteSel == false
+					DrawSpriteScreenXY(71, temp0, temp1)			// Delete Save Box Bottom
+				end if
+
+				if object.flashTimer < 6
+					DrawSpriteScreenXY(16, temp0, temp1)			// Save Box Outline
+				end if
+			end if
+
+			arrayPos0--
+		end if
+
+		arrayPos0 += 4
+		DrawSpriteScreenXY(arrayPos0, temp0, temp1)					// "SAVE [num]"
+		arrayPos0 -= 4
+
+		if screen.xsize > 384
+			temp0 += 74
+		else
+			if screen.xsize > 320
+				temp0 += 80
+			else
+				temp0 += 70
+			end if
+		end if
+		arrayPos0++
+	loop
+
+	if object.propertyValue == 0
+		if object.state >= SAVESEL_SLIDEIN
+			DrawRect(0, 0, object.spikesPos.x, screen.ysize, 0x20, 0x60, 0xC0, 0xFF)
+
+			arrayPos0 = object.spikesPos.y
+			arrayPos0 /= 2
+			arrayPos0 -= 78
+			temp0 = screen.ysize
+			temp0 += 78
+			while arrayPos0 <= temp0
+				DrawSpriteScreenXY(0, object.spikesPos.x, arrayPos0)		// Spikes
+				arrayPos0 += 78
+			loop
+		end if
+	end if
+
+	object.inkEffect = INK_ALPHA
+
+	temp0 = 28
+	if engine.deviceType == STANDARD
+		temp0 = -64
+	end if
+
+	DrawSpriteScreenFX(72, FX_INK, temp0, 151)
+
+	if keyDown[0].up == true
+		DrawSpriteScreenFX(73, FX_INK, temp0, 151)
+	end if
+
+	if keyDown[0].down == true
+		DrawSpriteScreenFX(74, FX_INK, temp0, 151)
+	end if
+
+	if keyDown[0].left == true
+		DrawSpriteScreenFX(75, FX_INK, temp0, 151)
+	end if
+
+	if keyDown[0].right == true
+		DrawSpriteScreenFX(76, FX_INK, temp0, 151)
+	end if
+
+	temp0 = screen.xsize
+	temp0 -= 64
+
+	if engine.deviceType == STANDARD
+		temp0 = -64
+	end if
+
+	DrawSpriteScreenFX(77, FX_INK, temp0, 151)
+
+	if keyDown[0].buttonA == true
+		DrawSpriteScreenFX(78, FX_INK, temp0, 151)
+	end if
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Menu/SaveSelect.gif")
+	
+	SpriteFrame(0, 0, 34, 78, 1, 1)			// #0  - Spikes
+	SpriteFrame(-91, 0, 182, 26, 99, 1)		// #1  - "SAVE SELECT"
+
+	SpriteFrame(0, 0, 68, 60, 36, 28)		// #2  - No Save Box
+	SpriteFrame(0, 0, 68, 132, 105, 28)		// #3  - Save Box
+
+	SpriteFrame(13, -9, 44, 7, 174, 89)		// #4  - "SAVE 1"
+	SpriteFrame(13, -9, 44, 7, 174, 97)		// #5  - "SAVE 2"
+	SpriteFrame(13, -9, 44, 7, 174, 105)		// #6  - "SAVE 3"
+	SpriteFrame(13, -9, 44, 7, 174, 113)		// #7  - "SAVE 4"
+
+	SpriteFrame(22, 41, 24, 40, 384, 1)		// #8  - Sonic portrait
+	SpriteFrame(14, 41, 32, 40, 409, 1)		// #9  - Tails portrait
+	SpriteFrame(20, 41, 27, 40, 442, 1)		// #10 - Knuckles portrait
+	SpriteFrame(12, 41, 44, 40, 384, 42)		// #11 - Sonic & Tails portrait
+	SpriteFrame(12, 41, 44, 40, 429, 42)		// #12 - Knuckles & Tails portrait
+
+	SpriteFrame(22, 41, 24, 40, 470, 1)		// #13 - Amy portrait
+	SpriteFrame(12, 41, 44, 40, 384, 83)		// #14 - Amy & Tails portrait
+
+	SpriteFrame(0, 0, 68, 60, 174, 28)		// #15 - No Save Box Outline
+	SpriteFrame(0, 0, 68, 132, 243, 28)		// #16 - Save Box Outline
+
+	SpriteFrame(-8, -8, 16, 16, 312, 45)		// #17 - Blue Arrow
+
+	SpriteFrame(0, 0, 62, 26, 36, 1)		// #18 - B button + "BACK"
+
+	SpriteFrame(18, 91, 32, 24, 329, 45)		// #19 - NEW SAVE Icon
+	SpriteFrame(18, 91, 32, 24, 1, 85)		// #20 - GHZ Icon
+	SpriteFrame(18, 91, 32, 24, 34, 85)		// #21 - MZ Icon
+	SpriteFrame(18, 91, 32, 24, 67, 85)		// #22 - SYZ Icon
+	SpriteFrame(18, 91, 32, 24, 100, 85)		// #23 - LZ Icon
+	SpriteFrame(18, 91, 32, 24, 133, 85)		// #24 - SLZ Icon
+	SpriteFrame(18, 91, 32, 24, 166, 85)		// #25 - SBZ Icon
+	SpriteFrame(18, 91, 32, 24, 199, 85)		// #26 - FZ Icon
+	SpriteFrame(18, 91, 32, 24, 180, 60)		// #27 - SS Icon
+	SpriteFrame(18, 91, 32, 24, 329, 70)		// #28 - COMPLETE Icon
+
+	SpriteFrame(22, 117, 24, 7, 332, 17)		// #29 - NEW SAVE Text
+	SpriteFrame(16, 117, 24, 7, 282, 1)		// #30 - GHZ Text
+	SpriteFrame(16, 117, 24, 7, 282, 9)		// #31 - MZ Text
+	SpriteFrame(16, 117, 24, 7, 282, 17)		// #32 - SYZ Text
+	SpriteFrame(16, 117, 24, 7, 307, 1)		// #33 - LZ Text
+	SpriteFrame(16, 117, 24, 7, 307, 9)		// #34 - SLZ Text
+	SpriteFrame(16, 117, 24, 7, 307, 17)		// #35 - SBZ Text
+	SpriteFrame(27, 117, 24, 7, 332, 1)		// #36 - FZ Text
+	SpriteFrame(16, 117, 24, 7, 332, 9)		// #37 - SS Text
+	SpriteFrame(15, 117, 38, 7, 312, 95)		// #38 - COMPLETE Text
+
+	SpriteFrame(44, 117, 8, 7, 357, 1)		// #39 - Small Number 1
+	SpriteFrame(44, 117, 8, 7, 357, 9)		// #40 - Small Number 2
+	SpriteFrame(44, 117, 8, 7, 357, 17)		// #41 - Small Number 3
+	SpriteFrame(44, 117, 8, 7, 366, 1)		// #42 - Small Number 4
+	SpriteFrame(44, 117, 8, 7, 366, 9)		// #43 - Small Number 5
+	SpriteFrame(44, 117, 8, 7, 366, 17)		// #44 - Small Number 6
+	SpriteFrame(44, 117, 8, 7, 375, 1)		// #45 - Small Number 7
+
+	SpriteFrame(11, 23, 16, 16, 312, 28)		// #46 - Sonic life icon
+	SpriteFrame(11, 23, 16, 16, 329, 28)		// #47 - Tails life icon
+	SpriteFrame(11, 23, 16, 16, 346, 28)		// #48 - Knuckles life icon
+	SpriteFrame(11, 23, 16, 16, 363, 28)		// #49 - Amy life icon
+
+	SpriteFrame(31, 29, 6, 6, 19, 98) 		// #50 - White small x icon
+
+	SpriteFrame(49, 26, 8, 11, 1, 50) 		// #51 - Number 0
+	SpriteFrame(49, 26, 8, 11, 10, 50) 		// #52 - Number 1
+	SpriteFrame(49, 26, 8, 11, 19, 50) 		// #53 - Number 2
+	SpriteFrame(49, 26, 8, 11, 28, 50) 		// #54 - Number 3
+	SpriteFrame(49, 26, 8, 11, 1, 62) 		// #55 - Number 4
+	SpriteFrame(49, 26, 8, 11, 10, 62) 		// #56 - Number 5
+	SpriteFrame(49, 26, 8, 11, 19, 62) 		// #57 - Number 6
+	SpriteFrame(49, 26, 8, 11, 28, 62) 		// #58 - Number 7
+	SpriteFrame(49, 26, 8, 11, 1, 74) 		// #59 - Number 8
+	SpriteFrame(49, 26, 8, 11, 10, 74) 		// #60 - Number 9
+
+	SpriteFrame(20, 4, 8, 8, 174, 121) 		// #61 - Blue Emerald
+	SpriteFrame(30, 4, 8, 8, 183, 121) 		// #62 - Yellow Emerald
+
+	// With 7 Emeralds, the third emeralds's color changes
+	if saveRAM[258] == false
+		SpriteFrame(40, 4, 8, 8, 192, 121) 	// #63 - Pink Emerald
+	else
+		SpriteFrame(40, 4, 8, 8, 201, 121) 	// #63 - Purple Emerald
+	end if
+
+	SpriteFrame(20, 13, 8, 8, 174, 130) 		// #64 - Green Emerald
+	SpriteFrame(30, 13, 8, 8, 183, 130) 		// #65 - Red Emerald
+	SpriteFrame(40, 13, 8, 8, 192, 130) 		// #66 - Grey Emerald
+	SpriteFrame(50, 13, 8, 8, 201, 130) 		// #67 - Cyan Emerald
+
+	SpriteFrame(15, 4, 38, 17, 174, 139) 		// #68 - 7 Emerald Container
+
+	SpriteFrame(-83, 0, 78, 26, 26, 89)		// #69 - X button + "DELETE"
+
+	SpriteFrame(0, 0, 68, 132, 36, 116)		// #70 - Delete Save Box
+	SpriteFrame(0, 84, 68, 48, 105, 200)		// #71 - Delete Save Box Bottom
+
+	SpriteFrame(0, 0, 58, 58, 312, 124)		// #72 - D-Pad
+	SpriteFrame(20, 0, 18, 18, 332, 183)		// #73 - Lit Up Button
+	SpriteFrame(20, 40, 18, 18, 332, 223)		// #74 - Lit Down Button
+	SpriteFrame(0, 20, 18, 18, 312, 203)		// #75 - Lit Left Button
+	SpriteFrame(40, 20, 18, 18, 352, 203)		// #76 - Lit Right Button
+
+	SpriteFrame(0, 17, 24, 24, 371, 124)		// #77 - A Button
+	SpriteFrame(0, 17, 24, 24, 371, 149)		// #78 - Lit A Button
+
+	SetPaletteEntry(0, 74, 0x202020)
+
+	LoadPalette("ZoneIcon_Pal.act", 1, 0, 0, 256)
+end event
+
+
+// ========================
+// Editor Events
+// ========================
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Items.gif")
+	SpriteFrame(-24, -24, 48, 48, 207, 1)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event
