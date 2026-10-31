@@ -148,6 +148,8 @@ event ObjectUpdate
 		object.spikesPos.x = -34
 		object.titlePos.y = -26
 		object.currentSelection = SAVESEL_SAVE1
+		stage.playerListPos = PLAYER_SONIC_A
+		stage.player2Enabled = false
 
 		if screen.xsize > 320
 			EditFrame(1, -91, 0, 182, 26, 99, 1)		// "SAVE SELECT"
@@ -166,10 +168,6 @@ event ObjectUpdate
 
 			object.currentSelection = options.saveSlot
 			object.currentSelection++
-
-			if options.gameMode == MODE_NOSAVE
-				object.currentSelection = SAVESEL_NOSAVE
-			end if
 
 			SetScreenFade(0, 0, 0, 255)
 		end if
@@ -612,9 +610,8 @@ event ObjectUpdate
 
 		object.alpha -= 24
 
-		object.spikesPos.x += 8
-		temp0 = 80
-		if object.spikesPos.x >= temp0
+		object.spikesPos.x += 10
+		if object.spikesPos.x >= 80
 			if object.returning == false
 				ResetObjectEntity(1, TypeName[Main Menu], 0, 0, 0)
 				object.returning = true
@@ -728,7 +725,15 @@ event ObjectDraw
 	LoadSpriteSheet("Menu/SaveSelect.gif")
 
 	if object.propertyValue == 0
-		DrawRect(0, 0, screen.xsize, screen.ysize, 0xF8, 0xF8, 0x00, 0xFF)
+		DrawRect(0, 0, screen.xsize, screen.ysize, 0xE0, 0xE0, 0x00, 0xFF)
+
+		arrayPos0 = 0
+		while arrayPos0 < 255
+			temp0 = arrayPos0
+			temp0 *= 24
+			DrawRect(0, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, arrayPos0)
+			arrayPos0++
+		loop
 
 		if object.state >= SAVESEL_SLIDEIN
 			DrawSpriteScreenXY(1, screen.xcenter, object.titlePos.y)		// "SAVE SELECT"
@@ -778,8 +783,19 @@ event ObjectDraw
 				end if
 			end if
 		end if
+	else
+		arrayPos0 = 0
+		while arrayPos0 < 255
+			temp0 = arrayPos0
+			temp0 *= 24
+			temp0 += screen.yoffset
+			DrawRect(0, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, arrayPos0)
+			arrayPos0++
+		loop
 	end if
 
+	temp0 = screen.xcenter
+	temp0 -= 167
 	temp0 = 45
 	temp1 = screen.yoffset
 	temp1 += 62
@@ -787,7 +803,7 @@ event ObjectDraw
 		temp0 = screen.xcenter
 		temp0 -= 34
 		temp1 = screen.yoffset
-		temp1 += 35
+		temp1 += 33
 	end if
 	DrawSpriteScreenXY(2, temp0, temp1)							// No Save Box
 
@@ -795,11 +811,12 @@ event ObjectDraw
 		if object.flashTimer < 6
 			DrawSpriteScreenXY(15, temp0, temp1)					// No Save Box Outline
 		end if
+		DrawSpriteScreenXY(81, temp0, temp1)						// Selected No Save Header
 	end if
 
 	temp2 = object.nSaveChar
 	temp2 += 8
-	temp1 -= 36
+	temp1 -= 38
 
 	if object.currentSelection == SAVESEL_NOSAVE
 		if object.arrowFlash < 16
@@ -818,9 +835,7 @@ event ObjectDraw
 	end if
 
 	DrawSpriteScreenXY(temp2, temp0, temp1)							// Character portrait
-	temp1 += 36
-
-	temp0 += 74
+	temp1 += 38
 
 	if screen.xsize <= 384
 		if screen.xsize > 320
@@ -829,7 +844,14 @@ event ObjectDraw
 			temp0 = 40
 		end if
 		temp1 = screen.yoffset
-		temp1 += 106
+		temp1 += 109
+	else
+		temp3 = screen.xsize
+		temp3 /= 96
+		temp2 = screen.xsize
+		temp2 /= 6
+		temp2 += temp3
+		temp0 += temp2
 	end if
 
 	arrayPos0 = 0
@@ -902,12 +924,15 @@ event ObjectDraw
 				
 			end switch
 			arrayPos0--
+		else
+			temp1 -= 16
 		end if
 		temp2 += 8
 		DrawSpriteScreenXY(temp2, temp0, temp1)						// Character portrait
-
 		if saveRAM[arrayPos1] == 0
 			temp1 += 18
+		else
+			temp1 += 16
 		end if
 
 		temp2 = saveRAM[arrayPos1]				// Get the stage the save is at
@@ -959,6 +984,7 @@ event ObjectDraw
 		DrawSpriteScreenXY(temp2, temp0, temp1)						// Zone Name
 
 		if saveRAM[arrayPos1] > 0
+			temp1++
 			// Act Number
 			CheckLower(saveRAM[arrayPos1], 19)
 			temp2 = checkResult
@@ -968,7 +994,7 @@ event ObjectDraw
 				if saveRAM[arrayPos1] >= 80
 					// Special Stage - Do the process for loading special stage numbers
 					arrayPos1 += 2			// Get the special stage of that save
-					temp2 = saveRAM[arrayPos1]	// Get the speciak stage the save is at
+					temp2 = saveRAM[arrayPos1]	// Get the special stage the save is at
 					temp3 = 6
 					temp3 += saveRAM[258]
 					temp2 %= temp3			// Prevent the act number from going over the Chaos Emerald count
@@ -984,6 +1010,7 @@ event ObjectDraw
 				DrawSpriteScreenXY(temp2, temp0, temp1)				// Act Number
 			end if
 
+			temp1 -= 3
 			switch saveRAM[arrayPos2]
 			case PLAYER_SONIC_A
 			case PLAYER_SONIC_TAILS_A
@@ -1021,60 +1048,80 @@ event ObjectDraw
 			DrawNumbers(51, temp0, temp1, saveRAM[arrayPos2], 2, 8, true)		// Lives Counter
 
 			LoadSpriteSheet("Menu/SaveSelect.gif")
-		end if
 
-		arrayPos1 = arrayPos0			// Get the save
-		arrayPos1 *= 8				// Get the character of that save
-		arrayPos1 += 5				// Get the emerald count of that save
+			arrayPos1 = arrayPos0			// Get the save
+			arrayPos1 *= 8				// Get the character of that save
+			arrayPos1 += 5				// Get the emerald count of that save
 
-		// With 7 Emeralds, the third emeralds's color changes
-		if saveRAM[258] == false
-			EditFrame(63, 40, 4, 8, 8, 192, 121) 	// Pink Emerald
-		else
-			EditFrame(63, 40, 4, 8, 8, 201, 121) 	// Purple Emerald
-		end if
-
-		if saveRAM[258] == true
-			DrawSpriteScreenXY(68, temp0, temp1)					// 7 Emerald Container
-		end if
-
-		// Chaos Emeralds
-		if saveRAM[arrayPos1] >= 0x1
-			DrawSpriteScreenXY(61, temp0, temp1)					// Blue Emerald
-
-		if saveRAM[arrayPos1] >= 0x3
-			DrawSpriteScreenXY(62, temp0, temp1)					// Yellow Emerald
-
-		if saveRAM[arrayPos1] >= 0x7
-			DrawSpriteScreenXY(63, temp0, temp1)					// Pink/Purple Emerald
-
-		if saveRAM[258] == true
-			temp0 -= 5
-		end if
-
-		if saveRAM[arrayPos1] >= 0xF
-			DrawSpriteScreenXY(64, temp0, temp1)					// Green Emerald
-
-		if saveRAM[arrayPos1] >= 0x1F
-			DrawSpriteScreenXY(65, temp0, temp1)					// Red Emerald
-
-		if saveRAM[arrayPos1] >= 0x3F
-			DrawSpriteScreenXY(66, temp0, temp1)					// Grey Emerald
-		end if
-
-		if saveRAM[258] == true
-			if saveRAM[arrayPos1] >= 0x7F
-				DrawSpriteScreenXY(67, temp0, temp1)				// Cyan Emerald
+			// With 7 Emeralds, the third emeralds's color changes
+			if saveRAM[258] == false
+				EditFrame(63, 5, 74, 8, 8, 192, 121) 	// Pink Emerald
+			else
+				EditFrame(63, 5, 74, 8, 8, 201, 121) 	// Purple Emerald
 			end if
-		end if
 
-		if saveRAM[258] == true
-			temp0 += 5
-		end if
-		end if
-		end if
-		end if
-		end if
+			if saveRAM[258] == true
+				temp0 -= 2
+			end if
+
+			temp2 = saveRAM[258]
+			temp2 += 6
+			arrayPos2 = 0
+			while arrayPos2 < temp2
+				// Chaos Emeralds
+				DrawSpriteScreenXY(68, temp0, temp1)				// Emerald Container
+
+				switch arrayPos2
+				case 0				// One Chaos Emerald
+					temp3 = 0x1
+					break
+
+				case 1				// Two Chaos Emeralds
+					temp3 = 0x3
+					break
+
+				case 2				// Three Chaos Emeralds
+					temp3 = 0x7
+					break
+
+				case 3				// Four Chaos Emeralds
+					temp3 = 0xF
+					break
+
+				case 4				// Five Chaos Emeralds
+					temp3 = 0x1F
+					break
+
+				case 5				// Six Chaos Emeralds
+					temp3 = 0x3F
+					break
+
+				case 6				// Seven Chaos Emeralds
+					temp3 = 0x7F
+					break
+					
+				end switch
+
+				if saveRAM[arrayPos1] >= temp3
+					arrayPos2 += 61
+					DrawSpriteScreenXY(arrayPos2, temp0, temp1)		// Blue Emerald
+					arrayPos2 -= 61
+				end if
+
+				if saveRAM[258] == false
+					temp0 += 10
+				else
+					temp0 += 9
+				end if
+				arrayPos2++
+			loop
+
+			if saveRAM[258] == false
+				temp0 -= 60
+			else
+				temp0 -= 61
+			end if
+			temp1 += 2
 		end if
 
 		if object.state == SAVESEL_DELETING
@@ -1094,12 +1141,24 @@ event ObjectDraw
 			arrayPos0--
 		end if
 
-		arrayPos0 += 4
+		arrayPos0++
+		if object.currentSelection == arrayPos0
+			DrawSpriteScreenXY(79, temp0, temp1)					// Selected Save Header
+		else
+			DrawSpriteScreenXY(80, temp0, temp1)					// Save Header
+		end if
+
+		arrayPos0 += 3
 		DrawSpriteScreenXY(arrayPos0, temp0, temp1)					// "SAVE [num]"
 		arrayPos0 -= 4
 
 		if screen.xsize > 384
-			temp0 += 74
+			temp3 = screen.xsize
+			temp3 /= 96
+			temp2 = screen.xsize
+			temp2 /= 6
+			temp2 += temp3
+			temp0 += temp2
 		else
 			if screen.xsize > 320
 				temp0 += 80
@@ -1175,10 +1234,10 @@ event ObjectStartup
 	SpriteFrame(0, 0, 68, 60, 36, 28)		// #2  - No Save Box
 	SpriteFrame(0, 0, 68, 132, 105, 28)		// #3  - Save Box
 
-	SpriteFrame(13, -9, 44, 7, 174, 89)		// #4  - "SAVE 1"
-	SpriteFrame(13, -9, 44, 7, 174, 97)		// #5  - "SAVE 2"
-	SpriteFrame(13, -9, 44, 7, 174, 105)		// #6  - "SAVE 3"
-	SpriteFrame(13, -9, 44, 7, 174, 113)		// #7  - "SAVE 4"
+	SpriteFrame(12, -10, 45, 8, 174, 89)		// #4  - "SAVE 1"
+	SpriteFrame(12, -10, 45, 8, 174, 97)		// #5  - "SAVE 2"
+	SpriteFrame(12, -10, 45, 8, 174, 105)		// #6  - "SAVE 3"
+	SpriteFrame(12, -10, 45, 8, 174, 113)		// #7  - "SAVE 4"
 
 	SpriteFrame(22, 41, 24, 40, 384, 1)		// #8  - Sonic portrait
 	SpriteFrame(14, 41, 32, 40, 409, 1)		// #9  - Tails portrait
@@ -1196,27 +1255,27 @@ event ObjectStartup
 
 	SpriteFrame(0, 0, 62, 26, 36, 1)		// #18 - B button + "BACK"
 
-	SpriteFrame(18, 91, 32, 24, 329, 45)		// #19 - NEW SAVE Icon
-	SpriteFrame(18, 91, 32, 24, 1, 85)		// #20 - GHZ Icon
-	SpriteFrame(18, 91, 32, 24, 34, 85)		// #21 - MZ Icon
-	SpriteFrame(18, 91, 32, 24, 67, 85)		// #22 - SYZ Icon
-	SpriteFrame(18, 91, 32, 24, 100, 85)		// #23 - LZ Icon
-	SpriteFrame(18, 91, 32, 24, 133, 85)		// #24 - SLZ Icon
-	SpriteFrame(18, 91, 32, 24, 166, 85)		// #25 - SBZ Icon
-	SpriteFrame(18, 91, 32, 24, 199, 85)		// #26 - FZ Icon
-	SpriteFrame(18, 91, 32, 24, 180, 60)		// #27 - SS Icon
-	SpriteFrame(18, 91, 32, 24, 329, 70)		// #28 - COMPLETE Icon
+	SpriteFrame(18, 90, 32, 24, 329, 45)		// #19 - NEW SAVE Icon
+	SpriteFrame(18, 90, 32, 24, 1, 85)		// #20 - GHZ Icon
+	SpriteFrame(18, 90, 32, 24, 34, 85)		// #21 - MZ Icon
+	SpriteFrame(18, 90, 32, 24, 67, 85)		// #22 - SYZ Icon
+	SpriteFrame(18, 90, 32, 24, 100, 85)		// #23 - LZ Icon
+	SpriteFrame(18, 90, 32, 24, 133, 85)		// #24 - SLZ Icon
+	SpriteFrame(18, 90, 32, 24, 166, 85)		// #25 - SBZ Icon
+	SpriteFrame(18, 90, 32, 24, 199, 85)		// #26 - FZ Icon
+	SpriteFrame(18, 90, 32, 24, 180, 60)		// #27 - SS Icon
+	SpriteFrame(18, 90, 32, 24, 329, 70)		// #28 - COMPLETE Icon
 
-	SpriteFrame(22, 117, 24, 7, 332, 17)		// #29 - NEW SAVE Text
-	SpriteFrame(16, 117, 24, 7, 282, 1)		// #30 - GHZ Text
-	SpriteFrame(16, 117, 24, 7, 282, 9)		// #31 - MZ Text
-	SpriteFrame(16, 117, 24, 7, 282, 17)		// #32 - SYZ Text
-	SpriteFrame(16, 117, 24, 7, 307, 1)		// #33 - LZ Text
-	SpriteFrame(16, 117, 24, 7, 307, 9)		// #34 - SLZ Text
-	SpriteFrame(16, 117, 24, 7, 307, 17)		// #35 - SBZ Text
-	SpriteFrame(27, 117, 24, 7, 332, 1)		// #36 - FZ Text
-	SpriteFrame(16, 117, 24, 7, 332, 9)		// #37 - SS Text
-	SpriteFrame(15, 117, 38, 7, 312, 95)		// #38 - COMPLETE Text
+	SpriteFrame(22, 118, 24, 7, 332, 17)		// #29 - NEW SAVE Text
+	SpriteFrame(16, 118, 24, 7, 282, 1)		// #30 - GHZ Text
+	SpriteFrame(16, 118, 24, 7, 282, 9)		// #31 - MZ Text
+	SpriteFrame(16, 118, 24, 7, 282, 17)		// #32 - SYZ Text
+	SpriteFrame(16, 118, 24, 7, 307, 1)		// #33 - LZ Text
+	SpriteFrame(16, 118, 24, 7, 307, 9)		// #34 - SLZ Text
+	SpriteFrame(16, 118, 24, 7, 307, 17)		// #35 - SBZ Text
+	SpriteFrame(27, 118, 24, 7, 332, 1)		// #36 - FZ Text
+	SpriteFrame(16, 118, 24, 7, 332, 9)		// #37 - SS Text
+	SpriteFrame(15, 118, 38, 7, 312, 95)		// #38 - COMPLETE Text
 
 	SpriteFrame(44, 117, 8, 7, 357, 1)		// #39 - Small Number 1
 	SpriteFrame(44, 117, 8, 7, 357, 9)		// #40 - Small Number 2
@@ -1226,40 +1285,40 @@ event ObjectStartup
 	SpriteFrame(44, 117, 8, 7, 366, 17)		// #44 - Small Number 6
 	SpriteFrame(44, 117, 8, 7, 375, 1)		// #45 - Small Number 7
 
-	SpriteFrame(11, 23, 16, 16, 312, 28)		// #46 - Sonic life icon
-	SpriteFrame(11, 23, 16, 16, 329, 28)		// #47 - Tails life icon
-	SpriteFrame(11, 23, 16, 16, 346, 28)		// #48 - Knuckles life icon
-	SpriteFrame(11, 23, 16, 16, 363, 28)		// #49 - Amy life icon
+	SpriteFrame(11, 9, 16, 16, 312, 28)		// #46 - Sonic life icon
+	SpriteFrame(11, 9, 16, 16, 329, 28)		// #47 - Tails life icon
+	SpriteFrame(11, 9, 16, 16, 346, 28)		// #48 - Knuckles life icon
+	SpriteFrame(11, 9, 16, 16, 363, 28)		// #49 - Amy life icon
 
-	SpriteFrame(31, 29, 6, 6, 19, 98) 		// #50 - White small x icon
+	SpriteFrame(31, 15, 6, 6, 19, 98) 		// #50 - White small x icon
 
-	SpriteFrame(49, 26, 8, 11, 1, 50) 		// #51 - Number 0
-	SpriteFrame(49, 26, 8, 11, 10, 50) 		// #52 - Number 1
-	SpriteFrame(49, 26, 8, 11, 19, 50) 		// #53 - Number 2
-	SpriteFrame(49, 26, 8, 11, 28, 50) 		// #54 - Number 3
-	SpriteFrame(49, 26, 8, 11, 1, 62) 		// #55 - Number 4
-	SpriteFrame(49, 26, 8, 11, 10, 62) 		// #56 - Number 5
-	SpriteFrame(49, 26, 8, 11, 19, 62) 		// #57 - Number 6
-	SpriteFrame(49, 26, 8, 11, 28, 62) 		// #58 - Number 7
-	SpriteFrame(49, 26, 8, 11, 1, 74) 		// #59 - Number 8
-	SpriteFrame(49, 26, 8, 11, 10, 74) 		// #60 - Number 9
+	SpriteFrame(49, 12, 8, 11, 1, 50) 		// #51 - Number 0
+	SpriteFrame(49, 12, 8, 11, 10, 50) 		// #52 - Number 1
+	SpriteFrame(49, 12, 8, 11, 19, 50) 		// #53 - Number 2
+	SpriteFrame(49, 12, 8, 11, 28, 50) 		// #54 - Number 3
+	SpriteFrame(49, 12, 8, 11, 1, 62) 		// #55 - Number 4
+	SpriteFrame(49, 12, 8, 11, 10, 62) 		// #56 - Number 5
+	SpriteFrame(49, 12, 8, 11, 19, 62) 		// #57 - Number 6
+	SpriteFrame(49, 12, 8, 11, 28, 62) 		// #58 - Number 7
+	SpriteFrame(49, 12, 8, 11, 1, 74) 		// #59 - Number 8
+	SpriteFrame(49, 12, 8, 11, 10, 74) 		// #60 - Number 9
 
-	SpriteFrame(20, 4, 8, 8, 174, 121) 		// #61 - Blue Emerald
-	SpriteFrame(30, 4, 8, 8, 183, 121) 		// #62 - Yellow Emerald
+	SpriteFrame(5, 74, 8, 8, 174, 121) 		// #61 - Blue Emerald
+	SpriteFrame(5, 74, 8, 8, 183, 121) 		// #62 - Yellow Emerald
 
 	// With 7 Emeralds, the third emeralds's color changes
 	if saveRAM[258] == false
-		SpriteFrame(40, 4, 8, 8, 192, 121) 	// #63 - Pink Emerald
+		SpriteFrame(5, 74, 8, 8, 192, 121) 	// #63 - Pink Emerald
 	else
-		SpriteFrame(40, 4, 8, 8, 201, 121) 	// #63 - Purple Emerald
+		SpriteFrame(5, 74, 8, 8, 201, 121) 	// #63 - Purple Emerald
 	end if
 
-	SpriteFrame(20, 13, 8, 8, 174, 130) 		// #64 - Green Emerald
-	SpriteFrame(30, 13, 8, 8, 183, 130) 		// #65 - Red Emerald
-	SpriteFrame(40, 13, 8, 8, 192, 130) 		// #66 - Grey Emerald
-	SpriteFrame(50, 13, 8, 8, 201, 130) 		// #67 - Cyan Emerald
+	SpriteFrame(5, 74, 8, 8, 174, 130) 		// #64 - Green Emerald
+	SpriteFrame(5, 74, 8, 8, 183, 130) 		// #65 - Red Emerald
+	SpriteFrame(5, 74, 8, 8, 192, 130) 		// #66 - Grey Emerald
+	SpriteFrame(5, 74, 8, 8, 201, 130) 		// #67 - Cyan Emerald
 
-	SpriteFrame(15, 4, 38, 17, 174, 139) 		// #68 - 7 Emerald Container
+	SpriteFrame(5, 74, 8, 8, 179, 139) 		// #68 - Emerald Container
 
 	SpriteFrame(-83, 0, 78, 26, 26, 89)		// #69 - X button + "DELETE"
 
@@ -1274,6 +1333,11 @@ event ObjectStartup
 
 	SpriteFrame(0, 17, 24, 24, 371, 124)		// #77 - A Button
 	SpriteFrame(0, 17, 24, 24, 371, 149)		// #78 - Lit A Button
+
+	SpriteFrame(0, -14, 68, 16, 243, 161)		// #79 - Selected Save Header
+	SpriteFrame(0, -14, 68, 16, 243, 178)		// #80 - Save Header
+
+	SpriteFrame(0, 44, 68, 16, 174, 72)		// #81 - Select No Save Header
 
 	SetPaletteEntry(0, 74, 0x202020)
 

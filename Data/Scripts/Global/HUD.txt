@@ -12,12 +12,19 @@
 private alias object.value0 : object.drawFunction
 private alias object.value1 : object.flashTimer
 private alias object.value2 : object.timeOver
+private alias object.value3 : object.superOffset
 
 // Player Aliases
-private alias object.type    : player.type
-private alias object.xpos    : player.xpos
-private alias object.ypos    : player.ypos
-private alias object.value0  : player.rings
+private alias object.type      : player.type
+private alias object.xpos      : player.xpos
+private alias object.ypos      : player.ypos
+private alias object.gravity   : player.gravity
+private alias object.animation : player.animation
+private alias object.controlMode : player.controlMode
+private alias object.value0    : player.rings
+private alias object.value35   : player.jumpAbilityState
+
+private alias 1 : SUPERSTATE_SUPER
 
 // Game Modes Aliases
 private alias 2 : MODE_TIMEATTACK
@@ -343,6 +350,10 @@ private function HUD_Draw_Standard
 		end if
 	end if
 	
+	if options.gameMode == MODE_TIMEATTACK
+		temp4 = false
+	end if
+
 	if temp4 == false
 #endplatform
 		// Draw life indicator
@@ -704,7 +715,7 @@ end function
 // Events
 // ========================
 
-event ObjectDraw
+event ObjectUpdate
 	// Progress HUD flashing
 	// 0 ring flashing takes priority over time over flashing
 	if player[0].rings == 0
@@ -729,17 +740,72 @@ event ObjectDraw
 			end if
 		end if
 	end if
-	
-#platform: USE_ORIGINS
-	if stage.playerListPos == PLAYER_AMY_A
-		EditFrame(15, 0, 0, 16, 16, 239, 174)
-		EditFrame(21, 0, 0, 31, 7, 182, 183)
-	end if
-#endplatform
 
 #platform: USE_ORIGINS
 	if game.timeOver != false
 		object.timeOver = true
+	end if
+#endplatform
+
+	if object[SLOT_PAUSEMENU].type == TypeName[Pause Menu]
+		if object.priority == PRIORITY_ALWAYS
+			object.priority = PRIORITY_ACTIVE
+		end if
+	else
+		if object.priority == PRIORITY_ACTIVE
+			object.priority = PRIORITY_ALWAYS
+		end if
+	end if
+
+	object.inkEffect = INK_ALPHA
+	object.alpha = 160
+	if player[0].gravity == GRAVITY_AIR
+		if player[0].animation == ANI_JUMPING
+			if player[0].jumpAbilityState == 1
+				object.alpha = 255
+			end if
+		end if
+	end if
+
+	CheckGreater(player[0].rings, 49)
+	temp0 = checkResult
+	CheckEqual(specialStage.emeralds, 0x7F)
+	temp0 &= checkResult
+	CheckEqual(options.superStates, true)
+	temp0 &= checkResult
+	if Player_superState == SUPERSTATE_SUPER
+		CheckEqual(player[0].animation, ANI_SUPER_TRANSFORM)
+		temp0 &= checkResult
+	end if
+	CheckNotEqual(player[0].controlMode, CONTROLMODE_NONE)
+	temp0 &= checkResult
+	CheckEqual(stage.timeEnabled, true)
+	temp0 &= checkResult
+	if temp0 == true
+		if player[0].animation == ANI_SUPER_TRANSFORM
+			if object.superOffset < 56
+				if object.superOffset >= 8
+					object.superOffset -= 8
+				end if
+			end if
+		else
+			if object.superOffset >= 8
+				object.superOffset -= 8
+			end if
+		end if
+	else
+		if object.superOffset <= 56
+			object.superOffset += 8
+		end if
+	end if
+end event
+
+
+event ObjectDraw	
+#platform: USE_ORIGINS
+	if stage.playerListPos == PLAYER_AMY_A
+		EditFrame(15, 0, 0, 16, 16, 239, 174)
+		EditFrame(21, 0, 0, 31, 7, 182, 183)
 	end if
 #endplatform
 
@@ -791,6 +857,34 @@ event ObjectDraw
 			end if
 		end if	
 	end if
+
+	checkResult = true
+
+	if object.drawFunction == HUD_Draw_Mobile
+		CheckNotEqual(player[0].type, TypeName[Debug Mode])
+	end if
+
+	if checkResult == true
+		LoadSpriteSheet("Global/Items.gif")
+
+		temp0 = screen.xsize
+		temp0 -= 61
+		temp0 += object.superOffset
+		temp1 = 16
+		if object.drawFunction == HUD_Draw_Mobile
+			temp1 += 12
+		else
+			if stage.debugMode == true
+				temp1 += 31
+				if player[0].type == TypeName[Debug Mode]
+					object.alpha = 0
+				end if
+			end if
+		end if
+		DrawSpriteScreenFX(46, FX_INK, temp0, temp1)
+	end if
+
+	LoadSpriteSheet("Global/Display.gif")
 end event
 
 
@@ -854,12 +948,18 @@ event ObjectStartup
 	SpriteFrame(0, 0, 8, 11, 19, 86) 	// 44 - Letter E
 	SpriteFrame(0, 0, 8, 11, 28, 86) 	// 45 - Letter F
 
+	SpriteFrame(0, 0, 43, 20, 192, 308) 	// 46 - Super indicator
+
 	foreach (TypeName[HUD], arrayPos0, ALL_ENTITIES)
 		if engine.deviceType == STANDARD
 			object[arrayPos0].drawFunction = HUD_Draw_Standard
 		else
 			object[arrayPos0].drawFunction = HUD_Draw_Mobile
 		end if
+		//	object[arrayPos0].drawFunction = HUD_Draw_Mobile
+
+		//object[arrayPos0].superOffset = screen.xsize
+		//object[arrayPos0].superOffset += 3
 
 		if stage.quickRestart == true
 			foreach (TypeName[Title Card], arrayPos1, ALL_ENTITIES)
@@ -867,6 +967,7 @@ event ObjectStartup
 			next
 
 			object[arrayPos0].alpha = 287
+			player.score = 0
 		end if
 	next
 end event

@@ -20,8 +20,8 @@ private alias object.value3 : object.totalPos
 private alias object.value4 : object.timePos
 private alias object.value5 : object.timeBonus
 private alias object.value6 : object.ringBonus
-private alias object.scale  : object.ringPos
-private alias object.value9 : object.newRecord
+private alias object.value7 : object.ringPos
+private alias object.value8 : object.newRecord
 
 // States
 private alias -1 : ACTFINISH_NORESULTS
@@ -396,20 +396,19 @@ event ObjectUpdate
 					arrayPos1 = options.saveSlot
 					arrayPos1 <<= 3
 					if stage.player2Enabled == true
-#platform: USE_STANDALONE
-						saveRAM[arrayPos1] = 3
-#endplatform
-
-#platform: USE_ORIGINS
 						switch stage.playerListPos
 						case PLAYER_SONIC_A
 							saveRAM[arrayPos1] = PLAYER_SONIC_TAILS_A
 							break
+						case PLAYER_KNUCKLES_A
+							saveRAM[arrayPos1] = PLAYER_KNUCKLES_TAILS_A
+							break
+#platform: USE_ORIGINS
 						case PLAYER_AMY_A
 							saveRAM[arrayPos1] = PLAYER_AMY_TAILS_A
 							break
-						end switch
 #endplatform
+						end switch
 					else
 						saveRAM[arrayPos1] = stage.playerListPos
 					end if
@@ -513,8 +512,8 @@ event ObjectUpdate
 					timeAttack.zone = stage.listPos
 					timeAttack.zone /= 3
 
-					timeAttack.actNum = stage.listPos
-					timeAttack.actNum %= 3
+					timeAttack.act = stage.listPos
+					timeAttack.act %= 3
 
 					stage.activeList = PRESENTATION_STAGE
 					stage.listPos = 6
@@ -864,7 +863,12 @@ event ObjectStartup
 	SpriteFrame(0, 0, 8, 11, 1, 74)  			// #21 - Number 8
 	SpriteFrame(0, 0, 8, 11, 10, 74)  			// #22 - Number 9
 	
+#platform: USE_STANDALONE
+	SpriteFrame(0, 0, 0, 0, 0, 0)			// #23 - "Blank"
+#endplatform
+#platform: USE_ORIGINS
 	SpriteFrame(-43, 0, 47, 16, 182, 166)		// #23 - "Amy"
+#endplatform
 
 	SpriteFrame(0, -2, 36, 16, 215, 190)  			// #24 - "Time" (Oval)
 	SpriteFrame(0, 0, 31, 11, 183, 192)  			// #25 - "Best"

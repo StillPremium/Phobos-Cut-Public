@@ -1,43 +1,97 @@
-> Added a new Main Menu, with extra features like an Achievements menu, Knuckles & Tails as a player option, and extra options
+-- SONIC THE HEDGEHOG 2013 - PHOBOS CUT CHANGELOG
 
+-- Version 1.1 -----------------------------------------------------------------------------------------------------------------------
+
+--------------- // Menu // ---------------
+> Modified the shading of yellow text
+> Added gradients to menus with flat-color backgrounds
+> Rearranged the information on the Save Select
+> Removed the "NEXT" button on Final Zone in Time Attack
+> Separated the Window Scale and Fullscreen options
+> Added a 5x Window Scale option
+> Fixed the loop point of the menu music being inaccurate
+> Fixed the stage not freezing if the player died or drowned shortly after unpausing the game
+> Fixed Player 2 persisting between and saves, along with the main character and the Time Attack
+> Fixed values like lives and score persisting into Time Attack
+> Fixed the player being sent to the incorrect submenu if they quit from the special stage in Time Attack
+> Fixed extra, broken achievements appearing in v5U
+
+-------- // Sonic the Hedgehog // --------
+> Removed Sonic's insta-shield being able to deflect things the elemental shields couldn't
+> Fixed Sonic's dropdash being released when he lands on Marble Zone Break Blocks
+> Fixed Sonic being unable to dropdash with goggles
+
+------- // Knuckles the Echidna // -------
+> Fixed Knuckles' crescent being tan in his menu portrait
+> Fixed Knuckles' crescent being tan in his second Water Slide frame
+
+------------- // General // --------------
+> Added super cancel functionality
+> Remapped the super transform/cancel button to Y
+> Added an indicator for when the player can transform
+> Added functionality for Tails and Knuckles' abilities being able to deflect projectiles like in S3K
+> Fixed being able to go super in seven emerald saves with emerald count as six
+> Fixed the camera resetting to normal when the player entered debug mode as Tails and the Extended Camera was enabled
+> Fixed Knuckles & Tails not functioning on saves
+> Fixed Player 2 being able to affect the camera when they shouldn't
+> Fixed the engine pause menu appearing if the player paused in Debug Mode 
+> Fixed the Invincibility appearing above the high stage layer for a single frame
+> Made Time Posts have palette rotation, like in Sonic Mania
+> Made Life Monitors switch to Ring Monitors in Time Attack like in Sonic Mania
+> Fixed the score not resetting to 0 after a Time Attack quick restart
+
+---------- // Stage Specific // ----------
+> Fixed the Peelout, Dropdash, and Amy's Hammer Jump animations being reset to the Walking animation when the player hit a bumper
+
+
+----------------- // Origins Exclusive // -----------------
+
+------- // Knuckles the Echidna // -------
+> Fixed the second part of Knuckles' idle animation breaking
+
+------------- // General // --------------
+> Fixed Touch Controls being disabled in gameplay
+
+
+
+
+
+-- Release Version -------------------------------------------------------------------------------------------------------------------
+
+-------- // Menu & Toggleables // --------
+> Added a new Main Menu, with extra features like an Achievements menu, Knuckles & Tails as a player option, and extra options
 > Added the Super Peelout (Toggleable!)
-> Added extra animations for Super Sonic, as well as tweaking already existing Super Sonic sprites
-> Added projectile deflecting functionality for the Insta-Shield
-> Extended the period that the Insta-Shield from 7 to 14 frames, as it is in S3K
-> Restored the original Sonic 1 skidding animation for Sonic instead of his Sonic CD variant
+> Added the Extended Camera (Toggleable!)
+> Added the CD Spindash (Toggleable!)
 > Ported the dropdash from Sonic Mania, also enabling it on Standalone Sonic 1 (Toggleable!)
 
+-------- // Sonic the Hedgehog // --------
+> Added projectile deflecting functionality for the Insta-Shield
+> Extended the period that the Insta-Shield from 7 to 14 frames, as it is in S3K
+> Added extra animations for Super Sonic, as well as tweaking already existing Super Sonic sprites
+> Restored the original Sonic 1 skidding animation for Sonic instead of his Sonic CD variant
+
+------- // Miles "Tails" Prower // -------
 > Added a flight cancel for Tails
 > Added extra frames for Tails' look up and down animations
 > Added tails to Tails' flailing animation
 > Gave Tails a drowning animation
 
+------- // Knuckles the Echidna // -------
 > Gave Knuckles the ability to jump and spindash in his glide drop and slide states
 > Gave Knuckles proper underwater super palettes
-> Gave Knuckles a second water slide animation frame
-> Made Knuckles' crescent to white instead of tan
+> Gave Knuckles a second Water Slide animation frame
+> Made Knuckles' crescent white instead of tan
 > Made Super Knuckles' glide accelerate faster
 
-> Fixed Amy's super palette being shifted over
-> Fixed Amy's Hammer Jump animation being offset
-> Fixed Amy's Hammer Dash being cancelled if she hit a slope
-> Fixed Super Amy's Hammer Dash causing a screen shake when it should not
-> Made Amy's Hammer Dash speed dependant on different variables (like speed shoes, super, etc)
-
-> Added the Extended Camera (Toggleable!)
-> Added the CD Spindash (Toggleable!)
+------------- // General // --------------
 > Added Time Attack Gates
 > Added the Sonic Mania Time Attack quick restart functionality
 > Added the Sonic Mania Time Attack Act Results functionality
 > Added Act Results score tally skipping functionality
-> Fixed objects disappearing when players got crushed in the Origins gametype
-> Fixed Tails' gravity disabling when it shouldn't in Origins gametypes
 > Fixed Player 2 using super physics when touching the surface of water
 > Fixed Player 2 not displaying their max speed animation
-> Fixed the player being inable to pause in debug mode while the Origins gametype is active
 > Standardized the font on the KTE HUD text
-> Standardized the Sonic Origins COINS HUD text spacing
-> Added Amy life icon & Coins display to the Mobile HUD
 > Ported the Debug Mode Level Select pause behavior from Sonic 2 2013
 > Reworked the Debug Mode controls to function more like Sonic Mania
 > Reworked the Debug Mode position displayer to look like Sonic Origins 3K
@@ -47,14 +101,34 @@
 > Gave Coins a unique sound effect
 > Made the animals inside of the Animal Prisons viewable before they're freed
 
+---------- // Stage Specific // ----------
 > Restored the original Title Screen scrolling behavior
 > Restored the prototype Marble Zone UFO Sprites
 > Made the Marble Zone Push Blocks oscillate up and down while floating across lava
 > Allowed super forms to destroy Bombs
 > Allowed the Insta-Shield to destroy Bombs
 > Added Act Results to SBZ3
-> Fixed Tails' tails not disappearing when he enters Debug Mode in Origins gametype
-> Fixed the player being able to farm Coins in the Special Stages
 > Added Level Select music
 > Added Knuckles & Tails as a player option
 > Replaced the Level Select player number with character initials
+
+
+----------------- // Origins Exclusive // -----------------
+
+-- // Amy Rose (Sonic Origins Plus) // ---
+> Fixed Amy's super palette being shifted over
+> Fixed Amy's Hammer Jump animation being offset
+> Fixed Amy's Hammer Dash being cancelled if she hit a slope
+> Fixed Super Amy's Hammer Dash causing a screen shake when it should not
+> Made Amy's Hammer Dash speed dependant on different variables (like speed shoes, super, etc)
+
+------------- // General // --------------
+> Fixed Tails' gravity disabling when it shouldn't in Origins gametypes
+> Fixed objects disappearing when players got crushed
+> Fixed the player being inable to pause in debug mode
+> Standardized the Sonic Origins COINS HUD text spacing
+> Added Amy's life icon & Coins display to the Mobile HUD
+
+---------- // Stage Specific // ----------
+> Fixed Tails' tails not disappearing when he enters Debug Mode in special stages
+> Fixed the player being able to farm Coins in the Special Stages

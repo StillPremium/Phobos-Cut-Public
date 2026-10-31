@@ -44,6 +44,9 @@ public alias 1 : FLIP_X
 public alias 2 : FLIP_Y
 public alias 3 : FLIP_XY
 
+// Game Mode Aliases
+private alias 0 : MODE_NOSAVE
+
 // Save Select Aliases
 private alias object.value13 : object.arrowFlash
 
@@ -53,6 +56,10 @@ private alias object.value13 : object.arrowFlash
 // ========================
 
 event ObjectUpdate
+	options.gameMode = MODE_NOSAVE
+	options.stageSelectFlag = false
+	stage.debugMode = false
+
 	switch object.state
 	case MAIN_INIT
 		if object.returning == false
@@ -407,7 +414,7 @@ event ObjectDraw
 	if object.state > MAIN_INIT
 		temp0 = screen.ysize
 		temp0 *= 2
-		DrawRect(0, object.spikesPos.y, screen.xsize, temp0, 0xF8, 0xF8, 0x00, 0xFF)
+		DrawRect(0, object.spikesPos.y, screen.xsize, temp0, 0xE0, 0xE0, 0x00, 0xFF)
 	end if
 
 	if object.alpha > 2
@@ -438,7 +445,7 @@ event ObjectStartup
 
 	object[0].type = TypeName[Main Menu]
 
-	SetMusicTrack("MainMenu.ogg", 0, true)
+	SetMusicTrack("MainMenu.ogg", 0, 106596)
 
 	LoadPalette("Achievements.act", 0, 0, 0, 96)
 

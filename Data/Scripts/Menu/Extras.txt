@@ -15,7 +15,7 @@ private alias object.value3 : object.flashTimer
 private alias object.value4 : object.spikesPos.x
 private alias object.value5 : object.spikesPos.y
 private alias object.value6 : object.titlePos.y
-private alias object.value7 : object.returning
+private alias object.value7 : object.gradientAlphaOffset
 private alias object.value8 : object.gSpikesPos
 
 // States
@@ -36,6 +36,9 @@ private alias 3 : EXTRAS_BACK
 private alias 0 : MODE_NOSAVE
 private alias 1 : MODE_SAVEGAME
 private alias 2 : MODE_TIMEATTACK
+
+// Main Menu Aliases
+private alias object.value7 : object.returning
 
 
 // ========================
@@ -231,9 +234,9 @@ event ObjectUpdate
 		end if
 
 		if object.currentSelection == EXTRAS_TIMEATTACK
-//			SetPaletteEntry(0, 201, 0xF80000)
+//			SetPaletteEntry(0, 201, 0xE00000)
 		else
-			SetPaletteEntry(0, 201, 0x2D9923)
+			SetPaletteEntry(0, 201, 0x20A020)
 		end if
 		break
 
@@ -247,12 +250,6 @@ event ObjectUpdate
 			object.timer = 0
 
 			object.state = EXTRAS_CASEDEPENDANT
-		end if
-
-		if object.currentSelection == EXTRAS_TIMEATTACK
-//			SetPaletteEntry(0, 201, 0xF80000)
-		else
-			SetPaletteEntry(0, 201, 0x2D9923)
 		end if
 		break
 
@@ -268,6 +265,7 @@ event ObjectUpdate
 			if temp0 >= screen.ysize
 				ResetObjectEntity(0, TypeName[Time Attack], 0, 0, 0)
 				object[0].flashTimer = object[1].flashTimer
+				object[0].gradientAlphaOffset = 12
 
 				ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
 			end if
@@ -293,6 +291,7 @@ event ObjectUpdate
 			if temp0 >= screen.ysize
 				ResetObjectEntity(0, TypeName[Achievements], 0, 0, 0)
 				object[0].flashTimer = object[1].flashTimer
+				object[0].gradientAlphaOffset = 12
 
 				ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
 			end if
@@ -332,12 +331,10 @@ event ObjectUpdate
 		object.flashTimer++
 		object.flashTimer %= 12
 
-		object.spikesPos.x += 8
-		temp0 = 80
-		if object.spikesPos.x >= temp0
-			if object.returning == false
+		object.spikesPos.x += 10
+		if object.spikesPos.x >= 80
+			if object[1].type != TypeName[Main Menu]
 				ResetObjectEntity(1, TypeName[Main Menu], 0, 0, 0)
-				object.returning = true
 				object[1].returning = true
 				object[1].currentSelection = 1
 			end if
@@ -356,7 +353,24 @@ end event
 
 event ObjectDraw
 	if object.propertyValue == 0
-		DrawRect(0, 0, screen.xsize, screen.ysize, 0xF8, 0xF8, 0x00, 0xFF)
+		if object.gradientAlphaOffset > 0
+			object.gradientAlphaOffset--
+		else
+			object.gradientAlphaOffset = 0
+		end if
+
+		DrawRect(0, 0, screen.xsize, screen.ysize, 0xE0, 0xE0, 0x00, 0xFF)
+
+		arrayPos0 = 0
+		while arrayPos0 < 255
+			temp0 = arrayPos0
+			temp0 *= 24
+			temp0 += screen.yoffset
+			temp1 = arrayPos0
+			temp1 -= object.gradientAlphaOffset
+			DrawRect(0, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, temp1)
+			arrayPos0++
+		loop
 
 		if object.state >= EXTRAS_SLIDEIN
 			DrawSpriteScreenXY(1, screen.xcenter, object.titlePos.y)		// "EXTRAS"
@@ -376,6 +390,18 @@ event ObjectDraw
 				end if
 			end if
 		end if
+	else
+		arrayPos0 = 0
+		while arrayPos0 < 255
+			temp0 = arrayPos0
+			temp0 *= 24
+			temp0 += screen.yoffset
+			temp1 = arrayPos0
+			arrayPos0 -= object.gradientAlphaOffset
+			DrawRect(0, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, arrayPos0)
+			arrayPos0 += object.gradientAlphaOffset
+			arrayPos0++
+		loop
 	end if
 
 	if screen.xsize > 384

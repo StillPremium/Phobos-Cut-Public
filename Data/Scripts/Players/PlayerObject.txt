@@ -222,7 +222,7 @@ private alias object.value11 : player.scrollDelay			// A timer of how long the c
 private alias object.value12 : player.tailFrame				// One of Tails' tail values, not used by the player itself
 private alias object.value13 : player.tailAnim				// Also one of Tails' tail values
 private alias object.value14 : player.skidding
-// value15 is unused
+// value15 is only used in origins, look below
 private alias object.value16 : player.isSidekick			// false if player 1, true if player 2
 private alias object.value17 : debugMode.currentSelection
 private alias object.value18 : player.sortedDrawOrder
@@ -283,6 +283,9 @@ private alias object.value0 : object.ledgePullFlag
 // Title Card aliases
 private alias 8 : TITLECARD_FADETOTITLE
 
+// HUD Aliases
+private alias object.value3 : object.superOffset
+private alias object[9].value47 : touchSuper
 
 // ========================
 // Function Declarations
@@ -1489,6 +1492,29 @@ public function Player_ProjectileHit
 	CheckEqual(object[arrayPos0].type, TypeName[Insta Shield])	// Reflect it if the player is using the Insta-shield
 	temp0 |= checkResult
 
+	CheckEqual(player[currentPlayer].animation, ANI_FLYING)
+	temp1 = checkResult
+	CheckEqual(player[currentPlayer].animation, ANI_FLYINGTIRED)
+	temp1 |= checkResult
+	CheckEqual(player[currentPlayer].animation, ANI_FLY_LIFT_UP)
+	temp1 |= checkResult
+	CheckEqual(player[currentPlayer].animation, ANI_FLY_LIFT_DOWN)
+	temp1 |= checkResult
+	CheckEqual(player[currentPlayer].animation, ANI_FLY_LIFT_TIRED)
+	temp1 |= checkResult
+	if temp1 == true
+		CheckGreater(player[currentPlayer].ypos, object.ypos)
+		temp0 |= checkResult
+	end if
+
+	if player[currentPlayer].animation == ANI_GLIDING
+		CheckGreater(player[currentPlayer].xpos, object.xpos)
+		temp0 |= checkResult
+		if player[currentPlayer].xvel > 0
+			temp0 ^= true
+		end if
+	end if
+
 	if temp0 == true
 		temp0 = player[currentPlayer].xpos
 		temp0 -= object.xpos
@@ -1633,7 +1659,6 @@ end function
 public function Player_ProcessUpdate
 	if options.attractMode == false
 		if player.controlMode == CONTROLMODE_P1
-#platform: USE_STANDALONE
 			CheckTouchRect(0, 96, screen.xcenter, screen.ysize)
 
 			if checkResult > -1
@@ -1695,6 +1720,22 @@ public function Player_ProcessUpdate
 				touchDebug = keyDown[1].buttonX
 			end if
 
+			if object[9].superOffset < 56
+				temp0 = screen.xsize
+				temp0 -= 77
+				temp0 += object[9].superOffset
+
+				CheckTouchRect(temp0, 42, screen.xsize, 72)
+				if checkResult > -1
+					keyDown[1].buttonY = true
+				end if
+
+				if touchSuper == false
+					keyPress[1].buttonY |= keyDown[1].buttonY
+				end if
+				touchSuper = keyDown[1].buttonY
+			end if
+
 			CheckTouchRect(240, 0, screen.xsize, 40)
 			if checkResult > -1
 				if object[SLOT_PAUSEMENU].type != TypeName[Pause Menu]
@@ -1710,7 +1751,6 @@ public function Player_ProcessUpdate
 					object[SLOT_PAUSEMENU].priority = PRIORITY_ALWAYS
 				end if
 			end if
-#endplatform
 
 			if keyPress[1].start == true
 				if object[SLOT_PAUSEMENU].type != TypeName[Pause Menu]
@@ -1733,7 +1773,6 @@ public function Player_ProcessUpdate
 		// In attract mode
 
 		if credits.screen == false
-#platform: USE_STANDALONE
 			CheckTouchRect(0, 0, screen.xsize, screen.ysize)
 
 			if keyPress[0].start == true
@@ -1746,20 +1785,11 @@ public function Player_ProcessUpdate
 				end if
 			end if
 
-			if keyPress[0].start == true
-				if Player_attractDuration > 1
-					Player_attractDuration = 1
-				end if
-			end if
-#endplatform
-
-#platform: USE_ORIGINS
 			if keyPress[1].start == true
 				if Player_attractDuration > 1
 					Player_attractDuration = 1
 				end if
 			end if
-#endplatform
 		end if
 
 		if player.controlMode == CONTROLMODE_P1
@@ -2348,7 +2378,11 @@ public function Player_HandleAirMovement
 #endplatform
 	
 #platform: USE_ORIGINS
-	if player.disableGravity == false
+	CheckEqual(game.playMode, BOOT_PLAYMODE_MISSION)
+	temp0 = checkResult
+	CheckEqual(player.disableGravity, false)
+	temp0 &= checkResult
+	if temp0 == false
 		player.yvel += player.gravityStrength
 	end if
 #endplatform
@@ -2661,7 +2695,6 @@ end function
 
 // Sonic's ability
 public function Player_Action_DblJumpSonic
-#platform: USE_ORIGINS
 	// Handle the super activation
 	if keyPress[1].buttonY != false
 		// Following checks are to see if Sonic should transform instead of doing arial abilities
@@ -2669,6 +2702,10 @@ public function Player_Action_DblJumpSonic
 		// Each bit represents an emerald's collected state - 127 is 7 1's, AKA 7 emeralds
 		CheckEqual(specialStage.emeralds, 127)
 		temp0 = checkResult
+
+		// Make sure the super option is *actually* enabled
+		CheckEqual(options.superStates, true)
+		temp0 &= checkResult
 
 		// Player needs to have at least 50 rings
 		CheckGreater(player.rings, 49)
@@ -2681,171 +2718,159 @@ public function Player_Action_DblJumpSonic
 		// Don't let the player transform if the level is over, either
 		CheckNotEqual(object[SLOT_ACTFINISH].type, TypeName[Act Finish])
 		temp0 &= checkResult
+
+		// Player hasn't used their arial abilities yet
+		CheckEqual(player.jumpAbilityState, 1)
+		temp0 &= checkResult
 		
 		if temp0 == true
 			// All checks passed, transform!
 			currentPlayer = player.entityPos
 			CallFunction(Player_TryTransform)
+#platform: USE_ORIGINS
 			CallNativeFunction4(NotifyCallback, NOTIFY_STATS_CHARA_ACTION, 1, 0, 0)
+#endplatform
 		end if
 	end if
-#endplatform
 
 	// Only act if the jump button is pressed
 	if player.jumpPress == true
-#platform: USE_STANDALONE
-		// Same code as earlier, so the comments won't be repeated
-		CheckEqual(specialStage.emeralds, 127)
+		// Check if the player should do arial abilities
+
+		// Can't do anything if invincible
+		CheckEqual(player.invincibleTimer, 0)
 		temp0 = checkResult
-		CheckGreater(player.rings, 49)
-		temp0 &= checkResult
+
+		// Can't do anything if Super, either
 		CheckNotEqual(Player_superState, SUPERSTATE_SUPER)
 		temp0 &= checkResult
-		CheckNotEqual(object[SLOT_ACTFINISH].type, TypeName[Act Finish])
+
+		// Can't do anything if Sonic's already used his ability
+		CheckLower(player.jumpAbilityState, 2)
 		temp0 &= checkResult
-		if temp0 == true
-			currentPlayer = player.entityPos
-			CallFunction(Player_TryTransform)
-		else
-#endplatform
-			// Check if the player should do arial abilities
 
-			// Can't do anything if invincible
-			CheckEqual(player.invincibleTimer, 0)
-			temp0 = checkResult
+		if temp0 == true // All checks passed?
+			// Determine ability with the player's current shield
+			switch player.shield
+			case SHIELD_NONE
+				if options.shieldType > SHIELDTYPE_S2 // Are S3 shields enabled?
+					PlaySfx(SfxName[Insta Shield], false)
 
-			// Can't do anything if Super, either
-			CheckNotEqual(Player_superState, SUPERSTATE_SUPER)
-			temp0 &= checkResult
-
-			// Can't do anything if Sonic's already used his ability
-			CheckLower(player.jumpAbilityState, 2)
-			temp0 &= checkResult
-
-			if temp0 == true // All checks passed?
-				// Determine ability with the player's current shield
-				switch player.shield
-				case SHIELD_NONE
-					if options.shieldType > SHIELDTYPE_S2 // Are S3 shields enabled?
-						PlaySfx(SfxName[Insta Shield], false)
-
-						// Set the shield object slot to hold the insta shield
-						if object[+playerCount].type == TypeName[Blank Object]
-							currentPlayer = player.entityPos
-							arrayPos0 = currentPlayer
-							arrayPos0 += playerCount
-							ResetObjectEntity(arrayPos0, TypeName[Insta Shield], 0, 0, 0)
-							object[arrayPos0].priority = PRIORITY_ACTIVE
-						end if
-
-						player.jumpAbilityState = 2
-
-						// Set insta shield state to active?
-						// Side note: this isn't ever used LOL
-						object[+playerCount].state = 1
-						
-						// Remove roll jump lock
-						if player.state == Player_State_RollJump
-							player.state = Player_State_Air
-						end if
-					else
-						// Just allow Sonic to dropdash
-						player.jumpAbilityState = 2
+					// Set the shield object slot to hold the insta shield
+					if object[+playerCount].type == TypeName[Blank Object]
+						currentPlayer = player.entityPos
+						arrayPos0 = currentPlayer
+						arrayPos0 += playerCount
+						ResetObjectEntity(arrayPos0, TypeName[Insta Shield], 0, 0, 0)
+						object[arrayPos0].priority = PRIORITY_ACTIVE
 					end if
-					break
 
-				case SHIELD_NORMAL
-					// Normal blue shield - just allow Sonic to dropdash
 					player.jumpAbilityState = 2
-					break
 
-				case SHIELD_BUBBLE
-					// Start the bubble bounce
-					PlaySfx(SfxName[Bubble Bounce], false)
-
-					player.yvel = 0x80000
-					player.xvel = 0
-					player.speed = player.xvel
-					player.jumpAbilityState = 0
-					player.state = Player_State_BubbleBounce
-
-					// Set the bubble shield state to falling
-					object[+playerCount].state = BUBBLESHIELD_BOUNCE_SETUP
-					break
-
-				case SHIELD_FIRE
-					PlaySfx(SfxName[Fire Dash], false)
-
-					// Determine launch direction based on where the player's currently facing
-					GetBit(temp0, player.direction, 0)
-
-					if temp0 == false
-						player.xvel = 0x80000
-					else
-						player.xvel = -0x80000
-					end if
-
-					player.speed = player.xvel
-					player.yvel = 0
-					player.jumpAbilityState = 0
-
-					// Lock the camera momentarily
-					if options.extendedCamera == false
-						player.scrollDelay = 15
-						camera[0].style = CAMERASTYLE_HLOCKED
-					else
-						camera[0].style = CAMERASTYLE_EXTENDED
-					end if
-
+					// Set insta shield state to active?
+					// Side note: this isn't ever used LOL
+					object[+playerCount].state = 1
+					
 					// Remove roll jump lock
 					if player.state == Player_State_RollJump
 						player.state = Player_State_Air
 					end if
-
-					// Set the flame shield to active and make it match the player's direction
-					object[+playerCount].state = FIRESHIELD_DASH_SETUP
-					object[+playerCount].direction = player.direction
-					break
-
-				case SHIELD_LIGHTNING
-					PlaySfx(SfxName[Lightning Jump], false)
-
-					// Double jump
-					player.yvel = -0x58000
-					player.jumpAbilityState = 0
-
-					// Create the spark objects
-					CreateTempObject(TypeName[Lightning Spark], 0, player.xpos, player.ypos)
-					object[tempObjectPos].xvel = -0x20000
-					object[tempObjectPos].yvel = -0x20000
-
-					CreateTempObject(TypeName[Lightning Spark], 0, player.xpos, player.ypos)
-					object[tempObjectPos].xvel =  0x20000
-					object[tempObjectPos].yvel = -0x20000
-
-					CreateTempObject(TypeName[Lightning Spark], 0, player.xpos, player.ypos)
-					object[tempObjectPos].xvel = -0x20000
-					object[tempObjectPos].yvel =  0x20000
-
-					CreateTempObject(TypeName[Lightning Spark], 0, player.xpos, player.ypos)
-					object[tempObjectPos].xvel =  0x20000
-					object[tempObjectPos].yvel =  0x20000
-
-					// Remove roll jump lock
-					if player.state == Player_State_RollJump
-						player.state = Player_State_Air
-					end if
-					break
-				end switch
-			else
-				// Just start the dropdash
-				if player.jumpAbilityState < 2
+				else
+					// Just allow Sonic to dropdash
 					player.jumpAbilityState = 2
 				end if
+				break
+
+			case SHIELD_NORMAL
+			case SHIELD_GOGGLES	// LZ Goggles
+				// Just allow Sonic to dropdash
+				player.jumpAbilityState = 2
+				break
+
+			case SHIELD_BUBBLE
+				// Start the bubble bounce
+				PlaySfx(SfxName[Bubble Bounce], false)
+
+				player.yvel = 0x80000
+				player.xvel = 0
+				player.speed = player.xvel
+				player.jumpAbilityState = 0
+				player.state = Player_State_BubbleBounce
+
+				// Set the bubble shield state to falling
+				object[+playerCount].state = BUBBLESHIELD_BOUNCE_SETUP
+				break
+
+			case SHIELD_FIRE
+				PlaySfx(SfxName[Fire Dash], false)
+
+				// Determine launch direction based on where the player's currently facing
+				GetBit(temp0, player.direction, 0)
+
+				if temp0 == false
+					player.xvel = 0x80000
+				else
+					player.xvel = -0x80000
+				end if
+
+				player.speed = player.xvel
+				player.yvel = 0
+				player.jumpAbilityState = 0
+
+				// Lock the camera momentarily
+				if options.extendedCamera == false
+					player.scrollDelay = 15
+					camera[0].style = CAMERASTYLE_HLOCKED
+				else
+					camera[0].style = CAMERASTYLE_EXTENDED
+				end if
+
+				// Remove roll jump lock
+				if player.state == Player_State_RollJump
+					player.state = Player_State_Air
+				end if
+
+				// Set the flame shield to active and make it match the player's direction
+				object[+playerCount].state = FIRESHIELD_DASH_SETUP
+				object[+playerCount].direction = player.direction
+				break
+
+			case SHIELD_LIGHTNING
+				PlaySfx(SfxName[Lightning Jump], false)
+
+				// Double jump
+				player.yvel = -0x58000
+				player.jumpAbilityState = 0
+
+				// Create the spark objects
+				CreateTempObject(TypeName[Lightning Spark], 0, player.xpos, player.ypos)
+				object[tempObjectPos].xvel = -0x20000
+				object[tempObjectPos].yvel = -0x20000
+
+				CreateTempObject(TypeName[Lightning Spark], 0, player.xpos, player.ypos)
+				object[tempObjectPos].xvel =  0x20000
+				object[tempObjectPos].yvel = -0x20000
+
+				CreateTempObject(TypeName[Lightning Spark], 0, player.xpos, player.ypos)
+				object[tempObjectPos].xvel = -0x20000
+				object[tempObjectPos].yvel =  0x20000
+
+				CreateTempObject(TypeName[Lightning Spark], 0, player.xpos, player.ypos)
+				object[tempObjectPos].xvel =  0x20000
+				object[tempObjectPos].yvel =  0x20000
+
+				// Remove roll jump lock
+				if player.state == Player_State_RollJump
+					player.state = Player_State_Air
+				end if
+				break
+			end switch
+		else
+			// Just start the dropdash
+			if player.jumpAbilityState < 2
+				player.jumpAbilityState = 2
 			end if
-#platform: USE_STANDALONE
 		end if
-#endplatform
 	end if
 
 	if options.dropdash == true
@@ -2868,7 +2893,6 @@ end function
 
 // Tails's ability
 public function Player_Action_DblJumpTails
-#platform: USE_ORIGINS
 	// Handle the super activation
 	if keyPress[1].buttonY != false
 		// Following checks are to see if Tails should transform instead of doing arial abilities
@@ -2877,6 +2901,10 @@ public function Player_Action_DblJumpTails
 		CheckEqual(specialStage.emeralds, 127)
 		temp0 = checkResult
 
+		// Make sure the super option is *actually* enabled
+		CheckEqual(options.superStates, true)
+		temp0 &= checkResult
+
 		// Player needs to have at least 50 rings
 		CheckGreater(player.rings, 49)
 		temp0 &= checkResult
@@ -2888,6 +2916,10 @@ public function Player_Action_DblJumpTails
 		// Don't let the player transform if the level is over, either
 		CheckNotEqual(object[SLOT_ACTFINISH].type, TypeName[Act Finish])
 		temp0 &= checkResult
+
+		// Player hasn't used their arial abilities yet
+		CheckEqual(player.jumpAbilityState, 1)
+		temp0 &= checkResult
 		
 		if temp0 == true
 			// All checks passed, transform!
@@ -2895,49 +2927,28 @@ public function Player_Action_DblJumpTails
 			CallFunction(Player_TryTransform)
 		end if
 	end if
-#endplatform
 
 	// Only act if the jump button is pressed
 	if player.jumpPress == true
-#platform: USE_STANDALONE
-		// Same code as earlier, so the comments won't be repeated
-		CheckEqual(specialStage.emeralds, 127)
-		temp0 = checkResult
-		CheckGreater(player.rings, 49)
-		temp0 &= checkResult
-		CheckNotEqual(Player_superState, SUPERSTATE_SUPER)
-		temp0 &= checkResult
-		CheckNotEqual(object[SLOT_ACTFINISH].type, TypeName[Act Finish])
-		temp0 &= checkResult
-		if temp0 == true
-			currentPlayer = player.entityPos
-			CallFunction(Player_TryTransform)
-		else
-#endplatform
-			// Make Tails start flying
+		// Make Tails start flying
 #platform: USE_ORIGINS
-			CallNativeFunction4(NotifyCallback, NOTIFY_STATS_CHARA_ACTION, 0, 1, 0)
+		CallNativeFunction4(NotifyCallback, NOTIFY_STATS_CHARA_ACTION, 0, 1, 0)
 #endplatform
-			player.timer = 0
-			player.state = Player_State_Fly
-			player.flightVelocity = 0x800
-			if player.gravityStrength == 0x3800
-				PlaySfx(SfxName[Flying], true)
-				player.animation = ANI_FLYING
-			else
-				player.animation = ANI_SWIMMING
-			end if
-#platform: USE_STANDALONE
+		player.timer = 0
+		player.state = Player_State_Fly
+		player.flightVelocity = 0x800
+		if player.gravityStrength == 0x3800
+			PlaySfx(SfxName[Flying], true)
+			player.animation = ANI_FLYING
+		else
+			player.animation = ANI_SWIMMING
 		end if
-#endplatform
 	end if
-
 end function
 
 
 // Knuckles' ability
 public function Player_Action_DblJumpKnux
-#platform: USE_ORIGINS
 	// Handle the super activation
 	if keyPress[1].buttonY != false
 		// Following checks are to see if Knuckles should transform instead of doing arial abilities
@@ -2946,6 +2957,10 @@ public function Player_Action_DblJumpKnux
 		CheckEqual(specialStage.emeralds, 127)
 		temp0 = checkResult
 
+		// Make sure the super option is *actually* enabled
+		CheckEqual(options.superStates, true)
+		temp0 &= checkResult
+
 		// Player needs to have at least 50 rings
 		CheckGreater(player.rings, 49)
 		temp0 &= checkResult
@@ -2957,6 +2972,10 @@ public function Player_Action_DblJumpKnux
 		// Don't let the player transform if the level is over, either
 		CheckNotEqual(object[SLOT_ACTFINISH].type, TypeName[Act Finish])
 		temp0 &= checkResult
+
+		// Player hasn't used their arial abilities yet
+		CheckEqual(player.jumpAbilityState, 1)
+		temp0 &= checkResult
 		
 		if temp0 == true
 			// All checks passed, transform!
@@ -2964,69 +2983,73 @@ public function Player_Action_DblJumpKnux
 			CallFunction(Player_TryTransform)
 		end if
 	end if
-#endplatform
 
 	// Only act if the jump button is pressed
 	if player.jumpPress == true
-#platform: USE_STANDALONE
-		// Same code as earlier, so the comments won't be repeated
-		CheckEqual(specialStage.emeralds, 127)
-		temp0 = checkResult
-		CheckGreater(player.rings, 49)
-		temp0 &= checkResult
-		CheckNotEqual(Player_superState, SUPERSTATE_SUPER)
-		temp0 &= checkResult
-		CheckNotEqual(object[SLOT_ACTFINISH].type, TypeName[Act Finish])
-		temp0 &= checkResult
-		if temp0 == true
-			currentPlayer = player.entityPos
-			CallFunction(Player_TryTransform)
-		else
-#endplatform
-			// Start gliding
+		// Start gliding
 #platform: USE_ORIGINS
-			CallNativeFunction4(NotifyCallback, NOTIFY_STATS_CHARA_ACTION2, 1, 0, 0)
+		CallNativeFunction4(NotifyCallback, NOTIFY_STATS_CHARA_ACTION2, 1, 0, 0)
 #endplatform
-			player.speed = 0x40000
-			if player.yvel < 0
-				player.yvel = 0
-			end if
-
-			if player.direction == FACING_RIGHT
-				player.state = Player_State_GlideRight
-				player.xvel = 0x40000
-				player.timer = 0
-			else
-				player.state = Player_State_GlideLeft
-				player.xvel = -0x40000
-				player.timer = 256
-			end if
-
-			player.animation = ANI_GLIDING
-			player.frame = 2
-#platform: USE_STANDALONE
+		player.speed = 0x40000
+		if player.yvel < 0
+			player.yvel = 0
 		end if
-#endplatform
+
+		if player.direction == FACING_RIGHT
+			player.state = Player_State_GlideRight
+			player.xvel = 0x40000
+			player.timer = 0
+		else
+			player.state = Player_State_GlideLeft
+			player.xvel = -0x40000
+			player.timer = 256
+		end if
+
+		player.animation = ANI_GLIDING
+		player.frame = 2
 	end if
 end function
 
 public function Player_Action_DblJumpAmy
 #platform: USE_ORIGINS
+	// Handle the super activation
 	if keyPress[1].buttonY != false
-		CheckEqual(specialStage.emeralds, 0x7F)
+		// Following checks are to see if Amy should transform instead of doing arial abilities
+
+		// Each bit represents an emerald's collected state - 127 is 7 1's, AKA 7 emeralds
+		CheckEqual(specialStage.emeralds, 127)
 		temp0 = checkResult
+
+		// Make sure the super option is *actually* enabled
+		CheckEqual(options.superStates, true)
+		temp0 &= checkResult
+
+		// Player needs to have at least 50 rings
 		CheckGreater(player.rings, 49)
 		temp0 &= checkResult
+
+		// Player can't already be Super, of course
 		CheckNotEqual(Player_superState, SUPERSTATE_SUPER)
 		temp0 &= checkResult
 
+		// Don't let the player transform if the level is over, either
+		CheckNotEqual(object[SLOT_ACTFINISH].type, TypeName[Act Finish])
+		temp0 &= checkResult
+
+		// Player hasn't used their arial abilities yet
+		CheckEqual(player.jumpAbilityState, 1)
+		temp0 &= checkResult
+
 		if temp0 == true
+			// All checks passed, transform!
 			currentPlayer = player.entityPos
 			CallFunction(Player_TryTransform)
 		end if
 	end if
 
+	// Only act if the jump button is pressed
 	if player.jumpPress == true
+		// Start the Hammer Jump
 		PlaySfx(SfxName[HammerJump], false)
 		CallNativeFunction4(NotifyCallback, NOTIFY_STATS_CHARA_ACTION2, 0, 1, 0)
 
@@ -3070,7 +3093,7 @@ public function Player_State_HammerJump
 		player.animation = ANI_HAMMER_DASH
 		player.timer = 0
 
-		player.speed = 0x60000
+		player.speed = player.topSpeed
 		if player.direction == FACING_LEFT
 			FlipSign(player.speed)
 		end if
@@ -3205,13 +3228,13 @@ public function Player_State_DropDash
 			end if
 		end if
 
-		if options.extendedCamera == false
-			if player.entityPos == SLOT_PLAYER1
+		if player.entityPos == SLOT_PLAYER1
+			if options.extendedCamera == false
 				player.scrollDelay = 8
 				camera[0].style = CAMERASTYLE_HLOCKED
+			else
+				camera[0].style = CAMERASTYLE_EXTENDED
 			end if
-		else
-			camera[0].style = CAMERASTYLE_EXTENDED
 		end if
 
 		// Create dust puff object
@@ -3376,16 +3399,11 @@ public function Player_State_Ground
 						player.animation = ANI_STOPPED
 						player.timer++
 					else
-						if player.timer < 570
-							player.animation = ANI_WAITING
-							player.timer++
-						else
-							player.animation = ANI_BORED
-							player.timer++
-							if player.timer == 842
-								player.timer = 0
-								player.animation = ANI_STOPPED
-							end if
+						player.animation = ANI_WAITING
+						player.timer++
+						if player.timer == 842
+							player.timer = 0
+							player.animation = ANI_STOPPED
 						end if
 					end if
 #endplatform
@@ -3618,9 +3636,13 @@ end function
 public function Player_State_Air
 	CallFunction(Player_HandleAirFriction)
 
-
 	// Only do this if actually in the air
 	if player.gravity == GRAVITY_AIR
+		if player.animation == ANI_GLIDING
+			player.timer = 0
+			player.animation = ANI_GLIDING_DROP
+			player.state = Player_State_GlideDrop
+		end if
 
 		CallFunction(Player_HandleAirMovement)
 
@@ -3675,6 +3697,27 @@ public function Player_State_Air
 			if temp0 == true
 				if player.jumpAbilityState >= 1
 					CallFunction(player.jumpAbility)
+
+					// Check that the player is pressing the super cancel button
+					CheckEqual(keyPress[1].buttonY, true)
+					temp0 = checkResult
+
+					// Check that they *can* use their ability, but have *not* used it
+					CheckEqual(player.jumpAbilityState, 1)
+					temp0 &= checkResult
+
+					// Check that the player is jumping
+					CheckEqual(player.animation, ANI_JUMPING)
+					temp0 &= checkResult
+
+					// Check that they're actually super
+					CheckEqual(Player_superState, SUPERSTATE_SUPER)
+					temp0 &= checkResult
+					if temp0 == true
+						// All checks passed, cancel the player's super transformation
+						Player_superRingLossTimer = 0
+						Player_superState = SUPERSTATE_UNTRANSFORM
+					end if
 				end if
 			end if
 		end if
@@ -3758,6 +3801,27 @@ public function Player_State_RollJump
 			if temp0 == true
 				if player.jumpAbilityState >= 1
 					CallFunction(player.jumpAbility)
+
+					// Check that the player is pressing the super cancel button
+					CheckEqual(keyPress[1].buttonY, true)
+					temp0 = checkResult
+
+					// Check that they *can* use their ability, but have *not* used it
+					CheckEqual(player.jumpAbilityState, 1)
+					temp0 &= checkResult
+
+					// Check that the player is jumping
+					CheckEqual(player.animation, ANI_JUMPING)
+					temp0 &= checkResult
+
+					// Check that they're actually super
+					CheckEqual(Player_superState, SUPERSTATE_SUPER)
+					temp0 &= checkResult
+					if temp0 == true
+						// All checks passed, cancel the player's super transformation
+						Player_superRingLossTimer = 0
+						Player_superState = SUPERSTATE_UNTRANSFORM
+					end if
 				end if
 			end if
 		end if
@@ -3848,11 +3912,13 @@ end function
 
 // While the player is charging the spindash
 public function Player_State_Spindash_MD
-	if options.extendedCamera == true
-		if player.direction == FACING_RIGHT
-			camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_L
-		else
-			camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_R
+	if player.entityPos == SLOT_PLAYER1
+		if options.extendedCamera == true
+			if player.direction == FACING_RIGHT
+				camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_L
+			else
+				camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_R
+			end if
 		end if
 	end if
 
@@ -3866,8 +3932,10 @@ public function Player_State_Spindash_MD
 		player.animationSpeed = temp0		// Apply it to their new jumping animation
 		player.iypos -= player.jumpOffset
 
-		if options.extendedCamera == true
-			camera[0].style = CAMERASTYLE_EXTENDED
+		if player.entityPos == SLOT_PLAYER1
+			if options.extendedCamera == true
+				camera[0].style = CAMERASTYLE_EXTENDED
+			end if
 		end if
 	end if
 
@@ -3896,13 +3964,13 @@ public function Player_State_Spindash_MD
 		player.animation = ANI_JUMPING
 		player.iypos -= player.jumpOffset
 
-		if options.extendedCamera == false
-			if player.entityPos == SLOT_PLAYER1
+		if player.entityPos == SLOT_PLAYER1
+			if options.extendedCamera == false
 				player.scrollDelay = 15
 				camera[0].style = CAMERASTYLE_HLOCKED
+			else
+				camera[0].style = CAMERASTYLE_EXTENDED
 			end if
-		else
-			camera[0].style = CAMERASTYLE_EXTENDED
 		end if
 
 		temp0 = player.abilityTimer
@@ -3931,21 +3999,25 @@ end function
 
 
 public function Player_State_Spindash_CD
-	if options.extendedCamera == true
-		if player.direction == FACING_RIGHT
-			camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_L
-		else
-			camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_R
+	if player.entityPos == SLOT_PLAYER1
+		if options.extendedCamera == true
+			if player.direction == FACING_RIGHT
+				camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_L
+			else
+				camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_R
+			end if
 		end if
 	end if
 
 	// Keep the camera lock, cancel the spin dash
 	if player.gravity == GRAVITY_AIR
 		player.state = Player_State_Air
-
 		player.speed = 0
-		if options.extendedCamera == true
-			camera[0].style = CAMERASTYLE_EXTENDED
+
+		if player.entityPos == SLOT_PLAYER1
+			if options.extendedCamera == true
+				camera[0].style = CAMERASTYLE_EXTENDED
+			end if
 		end if
 	end if
 
@@ -3962,13 +4034,13 @@ public function Player_State_Spindash_CD
 
 	// Release
 	if player.down == false
-		if options.extendedCamera == false
-			if player.entityPos == SLOT_PLAYER1
+		if player.entityPos == SLOT_PLAYER1
+			if options.extendedCamera == false
 				player.scrollDelay = 15
 				camera[0].style = CAMERASTYLE_HLOCKED
+			else
+				camera[0].style = CAMERASTYLE_EXTENDED
 			end if
-		else
-			camera[0].style = CAMERASTYLE_EXTENDED
 		end if
 		player.timer = 0
 
@@ -3992,11 +4064,13 @@ end function
 
 
 public function Player_State_Peelout
-	if options.extendedCamera == true
-		if player.direction == FACING_RIGHT
-			camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_L
-		else
-			camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_R
+	if player.entityPos == SLOT_PLAYER1
+		if options.extendedCamera == true
+			if player.direction == FACING_RIGHT
+				camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_L
+			else
+				camera[0].style = CAMERASTYLE_EXTENDED_OFFSET_R
+			end if
 		end if
 	end if
 
@@ -4005,10 +4079,13 @@ public function Player_State_Peelout
 		player.state = Player_State_Air
 		player.speed = 0
 
-		if options.extendedCamera == true
-			camera[0].style = CAMERASTYLE_EXTENDED
+		if player.entityPos == SLOT_PLAYER1
+			if options.extendedCamera == true
+				camera[0].style = CAMERASTYLE_EXTENDED
+			end if
 		end if
 	end if
+
 	// Charge
 	if player.gravityStrength == 0x1000
 		if player.abilityTimer < 0x60000
@@ -4019,6 +4096,7 @@ public function Player_State_Peelout
 			player.abilityTimer += 0x6000
 		end if
 	end if
+
 	// Speed building, from walking to running then peelout
 	if player.abilityTimer < 0x5F5C2
 		player.animation = ANI_WALKING
@@ -4041,16 +4119,17 @@ public function Player_State_Peelout
 
 	// Release
 	if player.up == false
-		if options.extendedCamera == false
-			if player.entityPos == SLOT_PLAYER1
+		if player.entityPos == SLOT_PLAYER1
+			if options.extendedCamera == false
 				player.scrollDelay = 15
 				camera[0].style = CAMERASTYLE_HLOCKED
+			else
+				camera[0].style = CAMERASTYLE_EXTENDED
 			end if
-		else
-			camera[0].style = CAMERASTYLE_EXTENDED
 		end if
 
 		player.state = Player_State_Ground
+
 		// Cancels the peel out if you didn't charged it enough
 		if player.abilityTimer < 0x5F5C2
 			player.speed = 0
@@ -4390,11 +4469,13 @@ public function Player_State_GlideLeft
 				end if
 			end if
 
-			if options.extendedCamera == true
-				if player[0].lookPosX < 62
-					player[0].lookPosX += 4
-				else
-					player[0].lookPosX = 64
+			if player.entityPos == SLOT_PLAYER1
+				if options.extendedCamera == true
+					if player[0].lookPosX < 62
+						player[0].lookPosX += 4
+					else
+						player[0].lookPosX = 64
+					end if
 				end if
 			end if
 
@@ -4537,11 +4618,13 @@ public function Player_State_GlideRight
 				end if
 			end if
 
-			if options.extendedCamera == true
-				if player[0].lookPosX > -62
-					player[0].lookPosX -= 4
-				else
-					player[0].lookPosX = -64
+			if player.entityPos == SLOT_PLAYER1
+				if options.extendedCamera == true
+					if player[0].lookPosX > -62
+						player[0].lookPosX -= 4
+					else
+						player[0].lookPosX = -64
+					end if
 				end if
 			end if
 
@@ -6092,7 +6175,8 @@ event ObjectStartup
 		else
 			camera[0].style = CAMERASTYLE_EXTENDED
 		end if
-		camera[0].target = 0
+		camera[0].target = SLOT_PLAYER1
+
 		currentPlayer = SLOT_PLAYER1
 
 		// Handle pairs
@@ -6207,12 +6291,6 @@ event ObjectStartup
 
 			player[SLOT_PLAYER1].jumpOffset = -5 // Offset by 5 pixels when rolling
 			player[SLOT_PLAYER1].jumpAbility = Player_Action_DblJumpKnux
-
-			// Force 2P Tails to be off if not on no-save
-			// Note this is actually bugged as this only checks for the last three save slots, ignoring the first one
-			if options.saveSlot > 0
-				stage.player2Enabled = false
-			end if
 			break
 #platform: USE_ORIGINS
 		case PLAYER_AMY_A

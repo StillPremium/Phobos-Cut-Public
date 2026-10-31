@@ -45,13 +45,13 @@ private alias 3 : PAUSE_FLASHOPTION
 private alias 4 : PAUSE_CASEDEPENDANT
 private alias 5 : PAUSE_HANDLESETTINGS
 
+// Player Aliases
+private alias object.animation : player.animation
+
 // Gamemodes
 private alias 0 : MODE_NOSAVE
 private alias 1 : MODE_SAVEGAME
 private alias 2 : MODE_TIMEATTACK
-
-// HUD Aliases
-private alias object[9].value1 : hud.flashTimer
 
 
 // ========================
@@ -296,7 +296,15 @@ event ObjectUpdate
 		switch object.currentSelection
 		case PAUSE_RESUME
 			engine.state = 1
-			stage.state = STAGE_RUNNING
+			
+			CheckEqual(player[0].animation, ANI_DYING)
+			temp0 = checkResult
+			CheckEqual(player[0].animation, ANI_DROWNING)
+			temp0 |= checkResult
+			if temp0 == false
+				stage.state = STAGE_RUNNING
+			end if
+
 			object.fade -= 8
 			if object.fade <= 0
 				object.ovalOffset -= 32
@@ -355,8 +363,16 @@ event ObjectUpdate
 					timeAttack.zone = stage.listPos
 					timeAttack.zone /= 3
 
-					timeAttack.actNum = stage.listPos
-					timeAttack.actNum %= 3
+					CheckCurrentStageFolder("Special")
+					if checkResult == true
+						timeAttack.zone = 7
+					end if
+
+					timeAttack.act = stage.listPos
+
+					if checkResult == false
+						timeAttack.act %= 3
+					end if
 
 					stage.lastMenu = 2
 				end if
@@ -482,7 +498,6 @@ event ObjectUpdate
 						switch checkResult
 						default
 							temp0 = 2
-							CallNativeFunction2(SetWindowFullScreen, false, 0)
 							break
 
 						case 1
@@ -491,7 +506,6 @@ event ObjectUpdate
 							else
 								temp0 = 2
 							end if
-							CallNativeFunction2(SetWindowFullScreen, false, 0)
 							break
 
 						case 2
@@ -500,7 +514,6 @@ event ObjectUpdate
 							else
 								temp0 = 3
 							end if
-							CallNativeFunction2(SetWindowFullScreen, false, 0)
 							break
 
 						case 3
@@ -509,21 +522,21 @@ event ObjectUpdate
 							else
 								temp0 = 4
 							end if
-							CallNativeFunction2(SetWindowFullScreen, false, 0)
 							break
 
 						case 4
 							if keyPress[0].left == true
-								CallNativeFunction(GetWindowFullScreen)
-								if checkResult == false
-									temp0 = 3
-								else
-									temp0 = 4
-								end if
-								CallNativeFunction2(SetWindowFullScreen, false, 0)
+								temp0 = 3
 							else
+								temp0 = 5
+							end if
+							break
+
+						case 5
+							if keyPress[0].left == true
 								temp0 = 4
-								CallNativeFunction2(SetWindowFullScreen, true, 0)
+							else
+								temp0 = 5
 							end if
 							break
 
@@ -605,6 +618,15 @@ event ObjectUpdate
 						break
 
 					case 6
+						CallNativeFunction(GetWindowFullScreen)
+						temp0 = checkResult
+						temp0 ^= 1
+						CallNativeFunction2(SetWindowFullScreen, temp0, 0)
+
+						CallNativeFunction(ApplyWindowChanges)
+						break
+
+					case 7
 						CallNativeFunction(GetWindowVSync)
 						temp0 = checkResult
 						temp0 ^= 1
@@ -616,6 +638,7 @@ event ObjectUpdate
 
 						CallNativeFunction(ApplyWindowChanges)
 						break
+						
 					end switch
 
 					WriteSaveRAM()
@@ -671,10 +694,6 @@ event ObjectUpdate
 		break
 		
 	end switch
-
-	if stage.state == STAGE_FROZEN
-		hud.flashTimer--
-	end if
 
 	object.spikesPos.x++
 	object.spikesPos.x %= 156
@@ -762,12 +781,12 @@ event ObjectUpdate
 	case 4
 		EditMenuEntry(MENU_2, "@@@@@@@@@@@4X", 2, false)
 		break
+
+	case 5
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@5X", 2, false)
+		break
 		
 	end switch
-	CallNativeFunction(GetWindowFullscreen)
-	if checkResult == true
-		EditMenuEntry(MENU_2, "@@@FULLSCREEN", 2, false)
-	end if
 
 	CallNativeFunction(GetWindowBorderless)
 	if checkResult == false
@@ -802,11 +821,18 @@ event ObjectUpdate
 		EditMenuEntry(MENU_2, "@@@@@BILINEAR", 5, false)
 	end if
 
-	CallNativeFunction(GetWindowVSync)
+	CallNativeFunction(GetWindowFullscreen)
 	if checkResult == true
 		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 6, false)
 	else
 		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 6, false)
+	end if
+
+	CallNativeFunction(GetWindowVSync)
+	if checkResult == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 7, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 7, false)
 	end if
 end event
 
@@ -1094,17 +1120,22 @@ event ObjectStartup
 	AddMenuEntry(MENU_1, "WINDOW BORDER", false)
 	AddMenuEntry(MENU_1, "SCREEN RATIO", false)
 	AddMenuEntry(MENU_1, "FILTER", false)
+	AddMenuEntry(MENU_1, "FULLSCREEN", false)
 	AddMenuEntry(MENU_1, "VSYNC", false)
-	AddMenuEntry(MENU_1, " ", false)
-	AddMenuEntry(MENU_1, " ", false)
-	AddMenuEntry(MENU_1, " ", false)
-	AddMenuEntry(MENU_1, " ", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
 	AddMenuEntry(MENU_1, "@@@@@@@@@@BACK", false)
-	AddMenuEntry(MENU_1, " ", false)
-	AddMenuEntry(MENU_1, " ", false)
-	AddMenuEntry(MENU_1, " ", false)
-	AddMenuEntry(MENU_1, " ", false)
-	AddMenuEntry(MENU_1, " ", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
+	AddMenuEntry(MENU_1, "@", false)
 
 	// Right column
 	SetupMenu(MENU_2, 0, 3, 1)
@@ -1115,16 +1146,21 @@ event ObjectStartup
 	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
 	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
 	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
-	AddMenuEntry(MENU_2, " ", false)
-	AddMenuEntry(MENU_2, " ", false)
-	AddMenuEntry(MENU_2, " ", false)
-	AddMenuEntry(MENU_2, " ", false)
-	AddMenuEntry(MENU_2, " ", false)
-	AddMenuEntry(MENU_2, " ", false)
-	AddMenuEntry(MENU_2, " ", false)
-	AddMenuEntry(MENU_2, " ", false)
-	AddMenuEntry(MENU_2, " ", false)
-	AddMenuEntry(MENU_2, " ", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
+	AddMenuEntry(MENU_2, "@", false)
 end event
 
 

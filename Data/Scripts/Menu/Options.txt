@@ -23,9 +23,7 @@ private alias object.value9  : object.pressedUD
 private alias 0 : OPTIONS_INIT
 private alias 1 : OPTIONS_SLIDEIN
 private alias 2 : OPTIONS_CONTROLS
-private alias 3 : OPTIONS_FLASHOPTION
-private alias 4 : OPTIONS_CASEDEPENDANT
-private alias 5 : OPTIONS_RETURNING
+private alias 3 : OPTIONS_RETURNING
 
 // Options
 private alias 0  : OPTIONS_MUSIC
@@ -34,21 +32,22 @@ private alias 2  : OPTIONS_WINDOWSCALE
 private alias 3  : OPTIONS_WINDOWBORDER
 private alias 4  : OPTIONS_SCREENRATIO
 private alias 5  : OPTIONS_SCREENFILTER
-private alias 6  : OPTIONS_VSYNC
-private alias 7  : OPTIONS_BLANK1
-private alias 8  : OPTIONS_BLANK2
-private alias 9  : OPTIONS_SPINDASH
-private alias 10 : OPTIONS_DROPDASH
-private alias 11 : OPTIONS_SUPERPEELOUT
-private alias 12 : OPTIONS_SHIELDTYPE
-private alias 13 : OPTIONS_GSPEEDCAP
-private alias 14 : OPTIONS_ASPEEDCAP
-private alias 15 : OPTIONS_SPIKEBUG
-private alias 16 : OPTIONS_REGION
-private alias 17 : OPTIONS_EXTENDEDCAMERA
-private alias 18 : OPTIONS_EMERALDCOUNT
-private alias 19 : OPTIONS_COINMODE
-private alias 20 : OPTIONS_BACK
+private alias 6  : OPTIONS_FULLSCREEN
+private alias 7  : OPTIONS_VSYNC
+private alias 8  : OPTIONS_BLANK1
+private alias 9  : OPTIONS_BLANK2
+private alias 10 : OPTIONS_SPINDASH
+private alias 11 : OPTIONS_DROPDASH
+private alias 12 : OPTIONS_SUPERPEELOUT
+private alias 13 : OPTIONS_SHIELDTYPE
+private alias 14 : OPTIONS_GSPEEDCAP
+private alias 15 : OPTIONS_ASPEEDCAP
+private alias 16 : OPTIONS_SPIKEBUG
+private alias 17 : OPTIONS_REGION
+private alias 18 : OPTIONS_EXTENDEDCAMERA
+private alias 19 : OPTIONS_EMERALDCOUNT
+private alias 20 : OPTIONS_COINMODE
+private alias 21 : OPTIONS_BACK
 
 // Game Mode Aliases
 private alias 0 : MODE_NOSAVE
@@ -250,7 +249,6 @@ event ObjectUpdate
 				switch checkResult
 				default
 					temp0 = 2
-					CallNativeFunction2(SetWindowFullScreen, false, 0)
 					break
 
 				case 1
@@ -259,7 +257,6 @@ event ObjectUpdate
 					else
 						temp0 = 2
 					end if
-					CallNativeFunction2(SetWindowFullScreen, false, 0)
 					break
 
 				case 2
@@ -268,7 +265,6 @@ event ObjectUpdate
 					else
 						temp0 = 3
 					end if
-					CallNativeFunction2(SetWindowFullScreen, false, 0)
 					break
 
 				case 3
@@ -277,21 +273,21 @@ event ObjectUpdate
 					else
 						temp0 = 4
 					end if
-					CallNativeFunction2(SetWindowFullScreen, false, 0)
 					break
 
 				case 4
 					if keyPress[0].left == true
-						CallNativeFunction(GetWindowFullScreen)
-						if checkResult == false
-							temp0 = 3
-						else
-							temp0 = 4
-						end if
-						CallNativeFunction2(SetWindowFullScreen, false, 0)
+						temp0 = 3
 					else
+						temp0 = 5
+					end if
+					break
+
+				case 5
+					if keyPress[0].left == true
 						temp0 = 4
-						CallNativeFunction2(SetWindowFullScreen, true, 0)
+					else
+						temp0 = 5
 					end if
 					break
 
@@ -368,6 +364,15 @@ event ObjectUpdate
 				// Prevent the fullscreen option from breaking
 				CallNativeFunction(GetWindowFullScreen)
 				CallNativeFunction2(SetWindowFullScreen, checkResult, 0)
+
+				CallNativeFunction(ApplyWindowChanges)
+				break
+
+			case OPTIONS_FULLSCREEN
+				CallNativeFunction(GetWindowFullScreen)
+				temp0 = checkResult
+				temp0 ^= 1
+				CallNativeFunction2(SetWindowFullScreen, temp0, 0)
 
 				CallNativeFunction(ApplyWindowChanges)
 				break
@@ -463,32 +468,14 @@ event ObjectUpdate
 		end if
 		break
 
-	case OPTIONS_FLASHOPTION
-		object.flashTimer += 3
-		object.flashTimer %= 12
-
-		object.timer++
-		if object.timer >= 36
-			object.flashTimer = 0
-			object.timer = 0
-
-			object.state = OPTIONS_CASEDEPENDANT
-		end if
-		break
-
-	case OPTIONS_CASEDEPENDANT
-
-		break
-
 	case OPTIONS_RETURNING
 		object.flashTimer++
 		object.flashTimer %= 12
 
 		object.alpha -= 24
 
-		object.spikesPos.x += 8
-		temp0 = 80
-		if object.spikesPos.x >= temp0
+		object.spikesPos.x += 10
+		if object.spikesPos.x >= 80
 			if object.returning == false
 				ResetObjectEntity(1, TypeName[Main Menu], 0, 0, 0)
 				object.returning = true
@@ -589,12 +576,12 @@ event ObjectUpdate
 	case 4
 		EditMenuEntry(MENU_2, "@@@@@@@@@@@4X", 2, false)
 		break
+
+	case 5
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@5X", 2, false)
+		break
 		
 	end switch
-	CallNativeFunction(GetWindowFullscreen)
-	if checkResult == true
-		EditMenuEntry(MENU_2, "@@@FULLSCREEN", 2, false)
-	end if
 
 	CallNativeFunction(GetWindowBorderless)
 	if checkResult == false
@@ -629,100 +616,107 @@ event ObjectUpdate
 		EditMenuEntry(MENU_2, "@@@@@@@@BILINEAR", 5, false)
 	end if
 
-	CallNativeFunction(GetWindowVSync)
+	CallNativeFunction(GetWindowFullscreen)
 	if checkResult == true
 		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 6, false)
 	else
 		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 6, false)
 	end if
 
+	CallNativeFunction(GetWindowVSync)
+	if checkResult == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 7, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 7, false)
+	end if
+
 	switch saveRAM[35]
 	case 0
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 9, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 10, false)
 		break
 
 	case 1
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@MD", 9, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@MD", 10, false)
 		break
 
 	case 2
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@CD", 9, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@CD", 10, false)
 		break
 		
 	end switch
 
 	if saveRAM[250] == true
-		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 10, false)
-	else
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 10, false)
-	end if
-
-	if saveRAM[251] == true
 		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 11, false)
 	else
 		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 11, false)
 	end if
 
+	if saveRAM[251] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 12, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 12, false)
+	end if
+
 	switch saveRAM[252]
 	case 0
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@S1", 12, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@S1", 13, false)
 		break
 
 	case 1
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@S2", 12, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@S2", 13, false)
 		break
 
 	case 2
-		EditMenuEntry(MENU_2, "@@@@@@@@S1+S3", 12, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@S1+S3", 13, false)
 		break
 
 	case 3
-		EditMenuEntry(MENU_2, "@@@@@@@@S2+S3", 12, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@S2+S3", 13, false)
 		break
 		
 	end switch
 
 	if saveRAM[253] == true
-		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 13, false)
-	else
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 13, false)
-	end if
-
-	if saveRAM[254] == true
 		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 14, false)
 	else
 		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 14, false)
 	end if
 
-	if saveRAM[255] == true
+	if saveRAM[254] == true
 		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 15, false)
 	else
 		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 15, false)
 	end if
 
-	if saveRAM[256] == true
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@JP", 16, false)
+	if saveRAM[255] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 16, false)
 	else
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@US", 16, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 16, false)
+	end if
+
+	if saveRAM[256] == true
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@JP", 17, false)
+	else
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@US", 17, false)
 	end if
 
 	if saveRAM[257] == true
-		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 17, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 18, false)
 	else
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 17, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 18, false)
 	end if
 
 	if saveRAM[258] == true
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@07", 18, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@07", 19, false)
 	else
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@06", 18, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@06", 19, false)
 	end if
 
 #platform: USE_ORIGINS
 	if saveRAM[259] == true
-		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 19, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@YES", 20, false)
 	else
-		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 19, false)
+		EditMenuEntry(MENU_2, "@@@@@@@@@@@NO", 20, false)
 	end if
 #endplatform
 end event
@@ -732,7 +726,16 @@ event ObjectDraw
 	LoadSpriteSheet("Menu/Options.gif")
 
 	if object.propertyValue == 0
-		DrawRect(0, 0, screen.xsize, screen.ysize, 0xF8, 0xF8, 0x00, 0xFF)
+		DrawRect(0, 0, screen.xsize, screen.ysize, 0xE0, 0xE0, 0x00, 0xFF)
+
+		arrayPos0 = 0
+		while arrayPos0 < 255
+			temp0 = arrayPos0
+			temp0 *= 24
+			temp0 += screen.yoffset
+			DrawRect(0, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, arrayPos0)
+			arrayPos0++
+		loop
 
 		if object.state >= OPTIONS_SLIDEIN
 			DrawSpriteScreenXY(1, screen.xcenter, object.titlePos.y)		// "OPTIONS"
@@ -752,10 +755,19 @@ event ObjectDraw
 				end if
 			end if
 		end if
+	else
+		arrayPos0 = 0
+		while arrayPos0 < 255
+			temp0 = arrayPos0
+			temp0 *= 24
+			temp0 += screen.yoffset
+			DrawRect(0, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, arrayPos0)
+			arrayPos0++
+		loop
 	end if
 
 	if screen.xsize > 384
-		temp0 = 83
+		temp0 = 73
 	else
 		if screen.xsize > 320
 			temp0 = 64
@@ -776,7 +788,7 @@ event ObjectDraw
 	DrawMenu(MENU_1, temp0, temp1)
 
 	if screen.xsize > 384
-		temp0 = 361
+		temp0 = 351
 	else
 		if screen.xsize > 320
 			temp0 = 342
@@ -785,6 +797,18 @@ event ObjectDraw
 		end if
 	end if
 	DrawMenu(MENU_2, temp0, temp1)
+
+	if screen.xsize > 384
+		temp0 = 351
+	else
+		if screen.xsize > 320
+			temp0 = 342
+		else
+			temp0 = 300
+		end if
+	end if
+	DrawMenu(1, temp0, temp1)
+
 	LoadSpriteSheet("Menu/Options.gif")
 
 	if object.propertyValue == 0
@@ -854,6 +878,7 @@ event ObjectStartup
 	AddMenuEntry(MENU_1, "WINDOW BORDER", false)
 	AddMenuEntry(MENU_1, "SCREEN RATIO", false)
 	AddMenuEntry(MENU_1, "SCREEN FILTER", false)
+	AddMenuEntry(MENU_1, "FULLSCREEN", false)
 	AddMenuEntry(MENU_1, "VSYNC", false)
 	AddMenuEntry(MENU_1, " ", false)
 	AddMenuEntry(MENU_1, " ", false)
@@ -869,7 +894,7 @@ event ObjectStartup
 	AddMenuEntry(MENU_1, "EMERALD COUNT", false)
 	AddMenuEntry(MENU_1, "@@@@@@@@@", false)
 #platform: USE_ORIGINS
-	EditMenuEntry(MENU_1, "COIN MODE", 19, false)
+	EditMenuEntry(MENU_1, "COIN MODE", 20, false)
 #endplatform
 
 	// Right column
@@ -880,6 +905,7 @@ event ObjectStartup
 	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
 	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
 	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@@@@", false)
+	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
 	AddMenuEntry(MENU_2, "@@@@@@@@@@@@@", false)
 	AddMenuEntry(MENU_2, " ", false)
 	AddMenuEntry(MENU_2, " ", false)

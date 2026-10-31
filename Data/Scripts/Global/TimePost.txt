@@ -12,13 +12,11 @@
 private alias object.value0 : object.spinCount
 private alias object.value1 : object.timer
 private alias object.value2 : object.spinDirection
+private alias object.value3 : object.palRotateIndex
 
 private alias 0 : TIMEPOST_AWAITPLAYER
 private alias 1 : TIMEPOST_SPINNING
-private alias 2 : TIMEPOST_HANDLEACTFINISH
-private alias 3 : TIMEPOST_EXITSTAGERIGHT
-private alias 4 : TIMEPOST_TOSPECIALSTAGE
-private alias 5 : TIMEPOST_BLANK
+private alias 2 : TIMEPOST_BLANK
 
 private alias 0 : TIMEPOST_STARTGATE
 private alias 1 : TIMEPOST_FINISHGATE
@@ -57,6 +55,15 @@ private alias 30 : SLOT_ACTFINISH
 
 // Achievement Aliases
 private alias 1 : ACHIEVEMENT_BLASTPROCESSING
+
+
+// ========================
+// Tables
+// ========================
+
+private table TimePost_PalRotate
+	0xE0E0E0, 0xE0E000, 0x404000, 0x808000
+end table
 
 
 // ========================
@@ -216,25 +223,70 @@ event ObjectUpdate
 	// "TIMEPOST_BLANK" doesn't have anything
 	
 	end switch
+
+	object.palRotateIndex++
+	object.palRotateIndex %= 16
 end event
 
 
 event ObjectDraw
-	if object.propertyValue == TIMEPOST_STARTGATE
-		if object.spinCount > 0
-			DrawSprite(object.frame)
-		else
-			DrawSprite(0)
-		end if
+	if object.spinCount > 0
+		temp0 = object.frame
 	else
-		if object.spinCount > 0
-			temp0 = object.frame
-			temp0 += 4
-			DrawSprite(temp0)
-		else
-			DrawSprite(4)
-		end if
+		temp0 = 0
 	end if
+	if object.propertyValue == TIMEPOST_FINISHGATE
+		temp0 += 4
+	end if
+
+	DrawSprite(temp0)
+
+	GetPaletteEntry(0, 6, temp3)
+	GetPaletteEntry(0, 15, temp4)
+	GetPaletteEntry(0, 20, temp5)
+	GetPaletteEntry(0, 21, temp6)
+
+	temp2 = object.palRotateIndex
+	temp2 /= 4
+	temp2--
+
+	arrayPos0 = 0
+	while arrayPos0 < 4
+
+		temp2++
+		if temp2 >= 4
+			temp2 -= 4
+		end if
+
+		GetTableValue(temp1, temp2, TimePost_PalRotate)
+		switch arrayPos0
+		case 0
+			SetPaletteEntry(0, 6, temp1)
+			break
+
+		case 1
+			SetPaletteEntry(0, 15, temp1)
+			break
+
+		case 2
+			SetPaletteEntry(0, 20, temp1)
+			break
+
+		case 3
+			SetPaletteEntry(0, 21, temp1)
+			break
+			
+		end switch
+
+		arrayPos0++
+	loop
+
+	DrawSprite(8)
+
+	SetPaletteEntry(0, 6, temp3)
+	SetPaletteEntry(0, 15, temp4)
+	SetPaletteEntry(0, 20, temp5)
+	SetPaletteEntry(0, 21, temp6)
 end event
 
 
@@ -253,6 +305,9 @@ event ObjectStartup
 	SpriteFrame(-22, -28, 44, 56, 384, 58)
 	SpriteFrame(-20, -28, 40, 56, 343, 58)
 	
+	// Spin
+	SpriteFrame(-23, -26, 46, 14, 256, 3)
+	
 	if options.gameMode == MODE_TIMEATTACK
 		object[24].type = TypeName[Time Post]
 		object[25].priority = PRIORITY_ACTIVE
@@ -260,24 +315,36 @@ event ObjectStartup
 		object[24].ixpos += 96
 		object[24].ypos = player[0].ypos
 		object[24].yvel = -0x10000
+		object[24].spinCount = 16
+
 		CheckCurrentStageFolder("Zone04")
 		if checkResult == true
-			if stage.actNum == 4
+			switch stage.actNum
+			case 1
+				object[24].iypos += 24
+				break
+
+			case 4
 				object[24].ixpos -= 136
 				object[24].iypos += 136
-			end if
+				break
+				
+			end switch
 		end if
-		object[24].spinCount = 16
 
 		foreach(TypeName[Lamp Post], arrayPos0, ALL_ENTITIES)
 			object[arrayPos0].type = TypeName[Blank Object]
 		next
 
 		foreach(TypeName[Sign Post], arrayPos0, ALL_ENTITIES)
-			object[arrayPos0].type = TypeName[Time Post]
-			object[arrayPos0].propertyValue = TIMEPOST_FINISHGATE
-			object[arrayPos0].yvel = -0x10000
-			object[arrayPos0].spinCount = 16
+			object[25].type = TypeName[Time Post]
+			object[25].propertyValue = TIMEPOST_FINISHGATE
+			object[25].xpos = player[arrayPos0].xpos
+			object[25].ypos = player[arrayPos0].ypos
+			object[25].yvel = -0x10000
+			object[25].spinCount = 16
+
+			object[arrayPos0].type = TypeName[Blank Object]
 		next
 	end if
 

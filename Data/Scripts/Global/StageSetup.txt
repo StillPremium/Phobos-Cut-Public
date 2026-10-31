@@ -360,7 +360,6 @@ event ObjectUpdate
 
 	end if
 
-#platform: USE_STANDALONE
 	// Show or hide touch controls UI based on what the player's situation is
 	// Do note, options.touchControls only controls whether or not the UI shows up,
 	// actual touch interaction is handled by the Player Object and its controlMode value
@@ -376,7 +375,6 @@ event ObjectUpdate
 	if object[SLOT_PAUSEMENU].type == TypeName[Pause Menu]
 		options.touchControls = false
 	end if
-#endplatform
 	
 	// Sort players and shields, player 1 should always be on top of player 2 and likewise for their shields
 	currentPlayer = playerCount

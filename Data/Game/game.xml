@@ -6,8 +6,6 @@
     <object name="Time Post" script="Global/TimePost.txt" forceLoad="true" />
   </objects>
   <variables>
-    <variable name="timeAttack.zone" value="0" />
-    <variable name="timeAttack.actNum" value="0" />
     <variable name="stage.lastMenu" value="0" />
     <variable name="stage.quickRestart" value="0" />
     <variable name="options.dropdash" value="0" />

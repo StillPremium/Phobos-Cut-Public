@@ -253,8 +253,8 @@ event ObjectUpdate
 			timeAttack.result = 100000
 			timeAttack.zone = stage.listPos
 			timeAttack.zone /= 3
-			timeAttack.actNum = stage.listPos
-			timeAttack.actNum %= 3
+			timeAttack.act = stage.listPos
+			timeAttack.act %= 3
 			stage.lastMenu = 2
 			player.score = 0
 			lampPostID = 0

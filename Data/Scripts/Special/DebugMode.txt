@@ -350,9 +350,18 @@ event ObjectUpdate
 					options.touchControls = false
 					stage.state = STAGE_FROZEN
 				else
-					// Pause the game
-					PlaySfx(SfxName[Menu Back], false)
-					engine.state = 5
+					if object[12].type != TypeName[Pause Menu]
+						// Pause the game
+						PlaySfx(SfxName[Menu Back], false)
+						StopSfx(SfxName[Flying])
+						StopSfx(SfxName[Jump])
+						PauseMusic()
+
+						engine.state = 1
+						stage.state = STAGE_FROZEN
+						ResetObjectEntity(12, TypeName[Pause Menu], 0, 0, 0)
+						object[12].priority = PRIORITY_ALWAYS
+					end if
 				end if
 			end if
 
@@ -365,9 +374,18 @@ event ObjectUpdate
 					options.touchControls = false
 					stage.state = STAGE_FROZEN
 				else
-					// Pause the game
-					PlaySfx(SfxName[Menu Back], false)
-					engine.state = 5
+					if object[12].type != TypeName[Pause Menu]
+						// Pause the game
+						PlaySfx(SfxName[Menu Back], false)
+						StopSfx(SfxName[Flying])
+						StopSfx(SfxName[Jump])
+						PauseMusic()
+
+						engine.state = 1
+						stage.state = STAGE_FROZEN
+						ResetObjectEntity(12, TypeName[Pause Menu], 0, 0, 0)
+						object[12].priority = PRIORITY_ALWAYS
+					end if
 				end if
 			end if
 
@@ -414,8 +432,18 @@ event ObjectUpdate
 				options.touchControls = false
 				stage.state = STAGE_FROZEN
 			else
-				// Pause the game
-				engine.state = 5
+				if object[12].type != TypeName[Pause Menu]
+					// Pause the game
+					PlaySfx(SfxName[Menu Back], false)
+					StopSfx(SfxName[Flying])
+					StopSfx(SfxName[Jump])
+					PauseMusic()
+
+					engine.state = 1
+					stage.state = STAGE_FROZEN
+					ResetObjectEntity(12, TypeName[Pause Menu], 0, 0, 0)
+					object[12].priority = PRIORITY_ALWAYS
+				end if
 			end if
 		end if
 		

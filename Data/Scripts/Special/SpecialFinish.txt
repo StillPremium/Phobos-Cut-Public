@@ -652,7 +652,7 @@ event ObjectUpdate
 
 			timeAttack.zone = 7
 
-			timeAttack.actNum = stage.listPos
+			timeAttack.act = stage.listPos
 
 			stage.activeList = PRESENTATION_STAGE
 			stage.listPos = 6

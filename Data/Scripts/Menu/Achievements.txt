@@ -15,7 +15,7 @@ private alias object.value3  : object.flashTimer
 private alias object.value4  : object.spikesPos.x
 private alias object.value5  : object.spikesPos.y
 private alias object.value6  : object.titlePos.y
-private alias object.value7  : object.returning
+private alias object.value7  : object.gradientAlphaOffset
 private alias object.value8  : object.ach1Offset
 private alias object.value9  : object.ach2Offset
 private alias object.value10 : object.ach3Offset
@@ -28,9 +28,7 @@ private alias object.value14 : object.pressedUD
 private alias 0 : ACHIEVEMENTS_INIT
 private alias 1 : ACHIEVEMENTS_SLIDEIN
 private alias 2 : ACHIEVEMENTS_CONTROLS
-private alias 3 : ACHIEVEMENTS_FLASHOPTION
-private alias 4 : ACHIEVEMENTS_CASEDEPENDANT
-private alias 5 : ACHIEVEMENTS_RETURNING
+private alias 3 : ACHIEVEMENTS_RETURNING
 
 // Selections
 private alias  1 : ACHIEVEMENTS_RAMPRINGACRO
@@ -43,18 +41,18 @@ private alias 0 : MODE_NOSAVE
 private alias 1 : MODE_SAVEGAME
 private alias 2 : MODE_TIMEATTACK
 
-// "Ramp Ring Acrobatics" - "Without touching the ground, collect all the rings in a trapezoid formation in Green Hill Zone Act 1"
-// "Blast Processing" - "Clear Green Hill Zone Act 1 in under 30 seconds"
-// "Secret of Marble Zone" - "Travel though a secret room in Marble Zone Act 3"
-// "Block Buster" - "Break 16 blocks in a row without stopping"
-// "Ring King" - "Collect 200 Rings"
-// "Secret of Labyrinth Zone" - "Activate and ride the hidden platform in Labyrinth Zone Act 1"
-// "Flawless Pursuit" - "Clear the boss in Labyrinth Zone without getting hurt"
-// "Bombs Away" - "Defeat the boss in Starlight Zone using only the see-saw bombs"
-// "Hidden Transporter" - "Collect 50 Rings and take the hidden transporter path in Scrap Brain Act 2"
-// "Chaos Connoisseur" - "Collect all the chaos emeralds"
-// "One For the Road" - "As a parting gift, land a final hit on Dr. Eggman's escaping Egg Mobile"
-// "Beat The Clock" - "Clear the Time Attack mode in less than 45 minutes"
+// "Ramp Ring Acrobatics" 	- "Without touching the ground, collect all the rings in a trapezoid formation in Green Hill Zone Act 1"
+// "Blast Processing" 		- "Clear Green Hill Zone Act 1 in under 30 seconds"
+// "Secret of Marble Zone" 	- "Travel though a secret room in Marble Zone Act 3"
+// "Block Buster" 		- "Break 16 blocks in a row without stopping"
+// "Ring King" 			- "Collect 200 Rings"
+// "Secret of Labyrinth Zone" 	- "Activate and ride the hidden platform in Labyrinth Zone Act 1"
+// "Flawless Pursuit" 		- "Clear the boss in Labyrinth Zone without getting hurt"
+// "Bombs Away" 		- "Defeat the boss in Starlight Zone using only the see-saw bombs"
+// "Hidden Transporter" 	- "Collect 50 Rings and take the hidden transporter path in Scrap Brain Act 2"
+// "Chaos Connoisseur" 		- "Collect all the chaos emeralds"
+// "One For the Road" 		- "As a parting gift, land a final hit on Dr. Eggman's escaping Egg Mobile"
+// "Beat The Clock" 		- "Clear the Time Attack mode in less than 45 minutes"
 
 // ========================
 // Events
@@ -66,9 +64,10 @@ event ObjectUpdate
 		object.spikesPos.x = screen.xsize
 		object.spikesPos.x += 34
 		object.titlePos.y = -26
-		object.ach1Offset = 362
-		object.ach2Offset = 362
-		object.ach3Offset = 362
+		object.ach1Offset = screen.xsize
+		object.ach1Offset -= 48
+		object.ach2Offset = object.ach1Offset
+		object.ach3Offset = object.ach1Offset
 		object.scrollingUp = true
 		object.state++
 		break
@@ -87,21 +86,23 @@ event ObjectUpdate
 			end if
 		end if
 
-		object.ach1Offset -= 24
-		if object.ach1Offset < 24
+		temp0 = screen.xsize
+		temp0 /= 17
+		object.ach1Offset -= temp0
+		if object.ach1Offset < temp0
 			object.ach1Offset = 0
 		end if
 
 		if object.ach1Offset <= 240
-			object.ach2Offset -= 24
-			if object.ach2Offset < 24
+			object.ach2Offset -= temp0
+			if object.ach2Offset < temp0
 				object.ach2Offset = 0
 			end if
 		end if
 
 		if object.ach2Offset <= 240
-			object.ach3Offset -= 24
-			if object.ach3Offset < 24
+			object.ach3Offset -= temp0
+			if object.ach3Offset < temp0
 				object.ach3Offset = 0
 				object.state++
 			end if
@@ -118,6 +119,9 @@ event ObjectUpdate
 		else
 			object.titlePos.y = 5
 		end if
+
+		object.flashTimer++
+		object.flashTimer %= 12
 		break
 
 	case ACHIEVEMENTS_CONTROLS
@@ -234,56 +238,38 @@ event ObjectUpdate
 		end if
 		break
 
-	case ACHIEVEMENTS_FLASHOPTION
-		object.flashTimer += 3
-		object.flashTimer %= 12
-
-		object.timer++
-		if object.timer >= 36
-			object.flashTimer = 0
-			object.timer = 0
-
-			object.state = ACHIEVEMENTS_CASEDEPENDANT
-		end if
-		break
-
-	case ACHIEVEMENTS_CASEDEPENDANT
-
-		break
-
 	case ACHIEVEMENTS_RETURNING
 		object.flashTimer++
 		object.flashTimer %= 12
 
 		object.alpha -= 24
 
-		object.spikesPos.x -= 8
-		temp0 = screen.xsize
-		temp0 -= 40
-		if object.spikesPos.x <= temp0
-			if object.returning == false
-				ResetObjectEntity(1, TypeName[Extras], 1, 0, 0)
-				object.returning = true
-				object[1].currentSelection = 1
-				object[1].state = 47
-				screen.xoffset = object.spikesPos.x
-				screen.xoffset -= screen.xsize
+		object.spikesPos.x -= 10
 
-				object[1].flashTimer++
-				object[1].flashTimer %= 12
-			else
-				screen.xoffset = object.spikesPos.x
-				screen.xoffset -= screen.xsize
+		temp5 = screen.xsize
+		temp5 -= 40
+		if object.spikesPos.x == temp5
+			ResetObjectEntity(1, TypeName[Extras], 1, 0, 0)
+			object[1].drawOrder = 6
+			object[1].state = 47
+			object[1].currentSelection = 1
+			object[1].gradientAlphaOffset = 12
+		end if
 
-				object[1].flashTimer++
-				object[1].flashTimer %= 12
-			end if
+		if object.spikesPos.x <= temp5
+			screen.xoffset = object.spikesPos.x
+			screen.xoffset -= screen.xsize
+			object[1].gradientAlphaOffset = 12
+
+			object[1].flashTimer++
+			object[1].flashTimer %= 12
 		end if
 
 		if object.spikesPos.x <= 0
 			ResetObjectEntity(0, TypeName[Extras], 0, 0, 0)
 			object[0].flashTimer = object[1].flashTimer
 			object[0].currentSelection = object[1].currentSelection
+			object[0].gradientAlphaOffset = 12
 			screen.xoffset = 0
 
 			ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
@@ -307,10 +293,39 @@ event ObjectDraw
 	LoadSpriteSheet("Menu/Achievements.gif")
 
 	if object.propertyValue == 0
-		DrawRect(0, 0, screen.xsize, screen.ysize, 0x2D, 0x99, 0x23, 0xFF)
+		if object.gradientAlphaOffset > 0
+			object.gradientAlphaOffset--
+		else
+			object.gradientAlphaOffset = 0
+		end if
+
+		GetPaletteEntry(0, 201, temp4)
+		temp1 = temp4
+		temp2 = temp4
+		temp3 = temp4
+
+		temp2 &= 0x00FF00
+		temp3 &= 0x0000FF
+  
+		temp1 >>= 16
+		temp2 >>= 8
+
+		DrawRect(0, 0, screen.xsize, screen.ysize, temp1, temp2, temp3, 0xFF)
+
+		arrayPos0 = 0
+		while arrayPos0 < 255
+			temp0 = arrayPos0
+			temp0 *= 24
+			temp0 += screen.yoffset
+			temp1 = arrayPos0
+			temp1 -= object.gradientAlphaOffset
+			DrawRect(0, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, temp1)
+			arrayPos0 += 2
+		loop
 	end if
 
-	temp0 = 49
+	temp0 = screen.xcenter
+	temp0 -= 159
 	if screen.xsize <= 384
 		temp0 = 20
 		if screen.xsize <= 320
@@ -321,10 +336,8 @@ event ObjectDraw
 	temp1 += 50
 	temp1 -= object.scrollAmount
 
-	CallNativeFunction(GetAchievementCount)
-	temp3 = checkResult
 	arrayPos0 = 0
-	while arrayPos0 < temp3
+	while arrayPos0 < 12
 		if arrayPos0 == 0
 			temp0 -= object.ach1Offset
 		end if
@@ -405,7 +418,7 @@ event ObjectDraw
 				end if
 			end if
 
-			DrawRect(object.spikesPos.x, 0, screen.xsize, screen.ysize, 0xF8, 0xF8, 0x00, 0xFF)
+			DrawRect(object.spikesPos.x, 0, screen.xsize, screen.ysize, 0xE0, 0xE0, 0x00, 0xFF)
 
 			arrayPos0 = object.spikesPos.y
 			arrayPos0 /= 2

@@ -123,7 +123,11 @@ event ObjectUpdate
 			player.drownLevel = 0
 			player.frame = debugMode.currentSelection
 			camera[0].enabled = true
-			camera[0].style = CAMERASTYLE_FOLLOW
+			if options.extendedCamera == false
+				camera[0].style = CAMERASTYLE_FOLLOW
+			else
+				camera[0].style = CAMERASTYLE_EXTENDED
+			end if
 
 			StopSfx(SfxName[Flying])
 			StopSfx(SfxName[Jump])

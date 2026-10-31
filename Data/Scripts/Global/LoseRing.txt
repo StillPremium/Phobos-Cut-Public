@@ -101,9 +101,7 @@ event ObjectUpdate
 					object.frame = 0
 					player[0].rings++
 					if player[0].rings > 999
-						// What the...?
-						// this is meant to be "player[0].rings" right...? we dont need to set this obj's value0 to 999...
-						player.rings = 999
+						player[0].rings = 999
 					end if
 
 					if player[0].rings >= ringExtraLife

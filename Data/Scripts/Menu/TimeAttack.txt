@@ -15,11 +15,11 @@ private alias object.value3  : object.flashTimer
 private alias object.value4  : object.spikesPos.x
 private alias object.value5  : object.spikesPos.y
 private alias object.value6  : object.titlePos.y
-private alias object.value7  : object.returning
-private alias object.value8  : object.ghzOffset
-private alias object.value9  : object.mzOffset
-private alias object.value10 : object.syzOffset
-private alias object.value11 : object.lzOffset
+private alias object.value7  : object.gradientAlphaOffset
+private alias object.value8  : object.button1Offset
+private alias object.value9  : object.button2Offset
+private alias object.value10 : object.button3Offset
+private alias object.value11 : object.button4Offset
 private alias object.value12 : object.scrollAmount
 private alias object.value13 : object.scrollingUp
 private alias object.value14 : object.pressedLR
@@ -145,10 +145,10 @@ event ObjectUpdate
 		object.spikesPos.x = screen.xsize
 		object.spikesPos.x += 34
 		object.titlePos.y = -26
-		object.ghzOffset = 362
-		object.mzOffset = 362
-		object.syzOffset = 362
-		object.lzOffset = 362
+		object.button1Offset = 362
+		object.button2Offset = 362
+		object.button3Offset = 362
+		object.button4Offset = 362
 		object.scale = 1024
 		object.scrollingUp = true
 		object.state++
@@ -160,7 +160,7 @@ event ObjectUpdate
 			object.fade = 256
 
 			object.currentSelection = timeAttack.zone
-			object.chosenAct = timeAttack.actNum
+			object.chosenAct = timeAttack.act
 
 			temp2 = object.currentSelection
 			if object.currentSelection == 7
@@ -269,29 +269,29 @@ event ObjectUpdate
 			end if
 		end if
 
-		object.ghzOffset -= 24
-		if object.ghzOffset < 24
-			object.ghzOffset = 0
+		object.button1Offset -= 24
+		if object.button1Offset < 24
+			object.button1Offset = 0
 		end if
 
-		if object.ghzOffset <= 240
-			object.mzOffset -= 24
-			if object.mzOffset < 24
-				object.mzOffset = 0
+		if object.button1Offset <= 240
+			object.button2Offset -= 24
+			if object.button2Offset < 24
+				object.button2Offset = 0
 			end if
 		end if
 
-		if object.mzOffset <= 240
-			object.syzOffset -= 24
-			if object.syzOffset < 24
-				object.syzOffset = 0
+		if object.button2Offset <= 240
+			object.button3Offset -= 24
+			if object.button3Offset < 24
+				object.button3Offset = 0
 			end if
 		end if
 
-		if object.syzOffset <= 240
-			object.lzOffset -= 24
-			if object.lzOffset < 24
-				object.lzOffset = 0
+		if object.button3Offset <= 240
+			object.button4Offset -= 24
+			if object.button4Offset < 24
+				object.button4Offset = 0
 				object.state++
 			end if
 		end if
@@ -428,14 +428,14 @@ event ObjectUpdate
 		object.flashTimer++
 		object.flashTimer %= 12
 
-		object.ghzOffset += 24
-		if object.ghzOffset > 48
-			object.mzOffset += 24
-			if object.mzOffset > 48
-				object.syzOffset += 24
-				if object.syzOffset > 48
-					object.lzOffset += 24
-					if object.lzOffset > 272
+		object.button1Offset += 24
+		if object.button1Offset > 48
+			object.button2Offset += 24
+			if object.button2Offset > 48
+				object.button3Offset += 24
+				if object.button3Offset > 48
+					object.button4Offset += 24
+					if object.button4Offset > 272
 						object.state = TATTACK_PART2_SLIDEIN
 					end if
 				end if
@@ -470,7 +470,7 @@ event ObjectUpdate
 
 		object.alpha -= 24
 
-		object.spikesPos.x -= 8
+		object.spikesPos.x -= 10
 
 		temp5 = screen.xsize
 		temp5 -= 40
@@ -478,11 +478,13 @@ event ObjectUpdate
 			ResetObjectEntity(1, TypeName[Extras], 1, 0, 0)
 			object[1].drawOrder = 6
 			object[1].state = 47
+			object[1].gradientAlphaOffset = 12
 		end if
 
 		if object.spikesPos.x <= temp5
 			screen.xoffset = object.spikesPos.x
 			screen.xoffset -= screen.xsize
+			object[1].gradientAlphaOffset = 12
 
 			object[1].flashTimer++
 			object[1].flashTimer %= 12
@@ -492,6 +494,7 @@ event ObjectUpdate
 			ResetObjectEntity(0, TypeName[Extras], 0, 0, 0)
 			object[0].flashTimer = object[1].flashTimer
 			object[0].currentSelection = object[1].currentSelection
+			object[0].gradientAlphaOffset = 12
 			screen.xoffset = 0
 
 			ResetObjectEntity(1, TypeName[Blank Object], 0, 0, 0)
@@ -507,10 +510,10 @@ event ObjectUpdate
 			object.recordsPos = 46
 			object.state++
 		end if
-		object.ghzOffset = 362
-		object.mzOffset = 362
-		object.syzOffset = 362
-		object.lzOffset = 362
+		object.button1Offset = 362
+		object.button2Offset = 362
+		object.button3Offset = 362
+		object.button4Offset = 362
 		break
 
 	case TATTACK_PART2_CONTROLS
@@ -559,15 +562,17 @@ event ObjectUpdate
 			end if
 		end if
 
-		temp0 = keyPress[0].left
-		temp0 |= keyPress[0].right
-		if temp0 == true
-			options.physicalControls = true
-			object.recordsSel ^= true
+		if object.currentSelection != 6
+			temp0 = keyPress[0].left
+			temp0 |= keyPress[0].right
+			if temp0 == true
+				options.physicalControls = true
+				object.recordsSel ^= true
 
-			object.flashTimer = 0
+				object.flashTimer = 0
 
-			PlaySfx(SfxName[Score Add], false)
+				PlaySfx(SfxName[Score Add], false)
+			end if
 		end if
 
 		temp0 = keyPress[0].buttonA
@@ -697,7 +702,16 @@ event ObjectUpdate
 			object.bRecordFlash %= 6
 		end if
 
+		options.saveSlot = 0
 		options.gameMode = MODE_TIMEATTACK
+		player.lives = 1
+		player.score = 0
+		player.scoreBonus = 50000
+		specialStage.listPos = 0
+		specialStage.emeralds = 0
+		specialStage.nextZone = 0
+		lampPostID = 0
+		timeAttack.result = 0
 
 		object.fade += 8
 		music.volume -= 4
@@ -739,29 +753,29 @@ event ObjectUpdate
 		object.recordsPos -= 8
 		if object.recordsPos <= -163
 			object.recordsPos = -163
-			object.ghzOffset -= 24
-			if object.ghzOffset < 24
-				object.ghzOffset = 0
+			object.button1Offset -= 24
+			if object.button1Offset < 24
+				object.button1Offset = 0
 			end if
 
-			if object.ghzOffset <= 240
-				object.mzOffset -= 24
-				if object.mzOffset < 24
-					object.mzOffset = 0
+			if object.button1Offset <= 240
+				object.button2Offset -= 24
+				if object.button2Offset < 24
+					object.button2Offset = 0
 				end if
 			end if
 
-			if object.mzOffset <= 240
-				object.syzOffset -= 24
-				if object.syzOffset < 24
-					object.syzOffset = 0
+			if object.button2Offset <= 240
+				object.button3Offset -= 24
+				if object.button3Offset < 24
+					object.button3Offset = 0
 				end if
 			end if
 
-			if object.syzOffset <= 240
-				object.lzOffset -= 24
-				if object.lzOffset < 24
-					object.lzOffset = 0
+			if object.button3Offset <= 240
+				object.button4Offset -= 24
+				if object.button4Offset < 24
+					object.button4Offset = 0
 					object.state = TATTACK_PART1_CONTROLS
 				end if
 			end if
@@ -806,7 +820,35 @@ event ObjectDraw
 	LoadSpriteSheet("Menu/TimeAttack.gif")
 
 	if object.propertyValue == 0
-		DrawRect(0, 0, screen.xsize, screen.ysize, 0x2D, 0x99, 0x23, 0xFF)
+		if object.gradientAlphaOffset > 0
+			object.gradientAlphaOffset--
+		else
+			object.gradientAlphaOffset = 0
+		end if
+
+		GetPaletteEntry(0, 201, temp4)
+		temp1 = temp4
+		temp2 = temp4
+		temp3 = temp4
+
+		temp2 &= 0x00FF00
+		temp3 &= 0x0000FF
+  
+		temp1 >>= 16
+		temp2 >>= 8
+
+		DrawRect(0, 0, screen.xsize, screen.ysize, temp1, temp2, temp3, 0xFF)
+
+		arrayPos0 = 0
+		while arrayPos0 < 255
+			temp0 = arrayPos0
+			temp0 *= 24
+			temp0 += screen.yoffset
+			temp1 = arrayPos0
+			temp1 -= object.gradientAlphaOffset
+			DrawRect(0, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, temp1)
+			arrayPos0 += 2
+		loop
 	end if
 
 	CheckLower(object.state, TATTACK_PART2_SLIDEIN)
@@ -832,16 +874,16 @@ event ObjectDraw
 			temp2 -= object.currentSelection
 			Abs(temp2)
 			if temp2 == 0
-				temp0 += object.ghzOffset
+				temp0 += object.button1Offset
 			end if
 			if temp2 == 1
-				temp0 += object.mzOffset
+				temp0 += object.button2Offset
 			end if
 			if temp2 == 2
-				temp0 += object.syzOffset
+				temp0 += object.button3Offset
 			end if
 			if temp2 == 3
-				temp0 += object.lzOffset
+				temp0 += object.button4Offset
 			end if
 			if object.state == 47
 				temp0 += screen.xsize
@@ -990,16 +1032,16 @@ event ObjectDraw
 			temp2 -= object.currentSelection
 			Abs(temp2)
 			if temp2 == 0
-				temp0 -= object.ghzOffset
+				temp0 -= object.button1Offset
 			end if
 			if temp2 == 1
-				temp0 -= object.mzOffset
+				temp0 -= object.button2Offset
 			end if
 			if temp2 == 2
-				temp0 -= object.syzOffset
+				temp0 -= object.button3Offset
 			end if
 			if temp2 == 3
-				temp0 -= object.lzOffset
+				temp0 -= object.button4Offset
 			end if
 			if object.state == 47
 				temp0 -= screen.xsize
@@ -1014,6 +1056,8 @@ event ObjectDraw
 			temp0 = screen.xcenter
 			temp0 -= 126
 			DrawSpriteScreenXY(40, temp0, object.recordsPos)
+
+			EditFrame(74, 134, 135, 40, 21, 50, 411) 			// Small Button Outline
 
 			if object.flashTimer < 6
 				if object.recordsSel == 1
@@ -1039,6 +1083,13 @@ event ObjectDraw
 
 			temp1 = object.currentSelection
 			temp1 += 59
+			if object.currentSelection >= 1
+				if object.currentSelection <= 3
+					if object.currentSelection != 2
+						temp0 -= 8
+					end if
+				end if
+			end if
 			if object.currentSelection >= 6
 				temp0 += 24
 
@@ -1068,6 +1119,14 @@ event ObjectDraw
 				DrawSpriteScreenXY(temp1, temp0, object.recordsPos)
 				if object.currentSelection == 7
 					temp0 += 40
+				end if
+			end if
+
+			if object.currentSelection >= 1
+				if object.currentSelection <= 3
+					if object.currentSelection != 2
+						temp0 += 8
+					end if
 				end if
 			end if
 
@@ -1127,29 +1186,73 @@ event ObjectDraw
 
 				arrayPos0++
 			loop
-
-			temp0 = screen.xcenter
-			temp0 -= 126
-			temp0 += object.xpos
-			if object.xpos <= 126
-				DrawRect(0, object.recordsPos, temp0, 163, 0x2D, 0x99, 0x23, 0xFF)
-			else
-				DrawRect(temp0, object.recordsPos, screen.xsize, 163, 0x2D, 0x99, 0x23, 0xFF)
-			end if
-			DrawRect(temp0, object.recordsPos, 2, 163, 0x00, 0x00, 0x00, 0xFF)
-
-			temp0 = screen.xcenter
-			temp0 += 124
-			temp0 -= object.xpos
-			if object.xpos <= 126
-				DrawRect(temp0, object.recordsPos, screen.xsize, 163, 0x2D, 0x99, 0x23, 0xFF)
-			else
-				DrawRect(0, object.recordsPos, temp0, 163, 0x2D, 0x99, 0x23, 0xFF)
-			end if
-			DrawRect(temp0, object.recordsPos, 2, 163, 0x00, 0x00, 0x00, 0xFF)
-
 			LoadSpriteSheet("Menu/TimeAttack.gif")
 			SetActivePalette(3, 0, screen.ysize)
+
+			if object.currentSelection == 6
+				temp0 = object.recordsPos
+				temp0 += 130
+				DrawRect(screen.xcenter, temp0, 120, 30, 0xAD, 0xAD, 0xAD, 0xFF)
+
+				EditFrame(74, 166, 135, 40, 21, 50, 411) 			// Small Button Outline
+				temp0 = screen.xcenter
+				temp0 -= 126
+				DrawSpriteScreenXY(75, temp0, object.recordsPos)
+
+				if object.flashTimer < 6
+					DrawSpriteScreenXY(74, temp0, object.recordsPos)
+				end if
+			end if
+
+			if object.state == TATTACK_PART2_SWITCHACT
+				temp1 = screen.xcenter
+				temp1 -= 126
+				temp1 += object.xpos
+				if object.xpos <= 126
+					DrawRect(0, object.recordsPos, temp1, screen.ysize, 0x20, 0xA0, 0x20, 0xFF)
+				else
+					DrawRect(temp1, object.recordsPos, screen.xsize, screen.ysize, 0x20, 0xA0, 0x20, 0xFF)
+				end if
+
+				arrayPos0 = 0
+				while arrayPos0 < 255
+					temp0 = arrayPos0
+					temp0 *= 24
+					temp0 += screen.yoffset
+					if object.xpos <= 126
+						DrawRect(0, temp0, temp1, screen.ysize, 0xE0, 0xC0, 0x00, arrayPos0)
+					else
+						DrawRect(temp1, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, arrayPos0)
+					end if
+					arrayPos0 += 2
+				loop
+				DrawRect(temp1, object.recordsPos, 2, 163, 0x00, 0x00, 0x00, 0xFF)
+
+
+
+				temp1 = screen.xcenter
+				temp1 += 124
+				temp1 -= object.xpos
+				if object.xpos <= 126
+					DrawRect(temp1, object.recordsPos, screen.xsize, screen.ysize, 0x20, 0xA0, 0x20, 0xFF)
+				else
+					DrawRect(0, object.recordsPos, temp1, screen.ysize, 0x20, 0xA0, 0x20, 0xFF)
+				end if
+
+				arrayPos0 = 0
+				while arrayPos0 < 255
+					temp0 = arrayPos0
+					temp0 *= 24
+					temp0 += screen.yoffset
+					if object.xpos <= 126
+						DrawRect(temp1, temp0, screen.xsize, screen.ysize, 0xE0, 0xC0, 0x00, arrayPos0)
+					else
+						DrawRect(0, temp0, temp1, screen.ysize, 0xE0, 0xC0, 0x00, arrayPos0)
+					end if
+					arrayPos0 += 2
+				loop
+				DrawRect(temp1, object.recordsPos, 2, 163, 0x00, 0x00, 0x00, 0xFF)
+			end if
 		end if
 	end if
 
@@ -1176,7 +1279,7 @@ event ObjectDraw
 				end if
 			end if
 
-			DrawRect(object.spikesPos.x, 0, screen.xsize, screen.ysize, 0xF8, 0xF8, 0x00, 0xFF)
+			DrawRect(object.spikesPos.x, 0, screen.xsize, screen.ysize, 0xE0, 0xE0, 0x00, 0xFF)
 
 			arrayPos0 = object.spikesPos.y
 			arrayPos0 /= 2
@@ -1322,6 +1425,7 @@ event ObjectStartup
 	SpriteFrame(237, 8, 11, 16, 114, 547) 			// #73 - Yellow 6
 
 	SpriteFrame(134, 135, 40, 21, 50, 411) 			// #74 - Small Button Outline
+	SpriteFrame(166, 135, 40, 21, 135, 382) 		// #75 - Singular Small Button
 
 	LoadPalette("TimeAttack.act", 3, 0, 0, 256)
 

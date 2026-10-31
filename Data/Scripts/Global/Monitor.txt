@@ -364,6 +364,15 @@ event ObjectStartup
 		temp0++
 	loop
 
+	// Switch life icons to the Monitor variant if Time Attack is in play
+	if options.gameMode == MODE_TIMEATTACK
+		foreach (TypeName[Monitor], arrayPos0, ALL_ENTITIES)
+			if object[arrayPos0].propertyValue == MONITOR_1UP_SONIC
+				object[arrayPos0].propertyValue = MONITOR_RINGS
+			end if
+		next
+	end if
+
 	// Switch life icons to the Tails variant if Tails is the main character
 	if stage.playerListPos == PLAYER_TAILS_A
 		foreach (TypeName[Monitor], arrayPos0, ALL_ENTITIES)
@@ -409,15 +418,6 @@ event ObjectStartup
 			break
 			
 		end switch
-	end if
-
-	if options.gameMode == MODE_TIMEATTACK
-		// Delete every life monitor
-		foreach (TypeName[Monitor], arrayPos0, ALL_ENTITIES)
-			if object[arrayPos0].propertyValue == MONITOR_1UP_SONIC
-				object[arrayPos0].type = TypeName[Blank Object]
-			end if
-		next
 	end if
 end event
 
