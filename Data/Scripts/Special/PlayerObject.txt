@@ -206,11 +206,8 @@ end function
 
 public function Player_ProcessUpdate
 	if options.attractMode == false
-#platform: USE_STANDALONE
 		if options.touchControls == true
-#endplatform
 			if player.controlMode == CONTROLMODE_P1
-#platform: USE_STANDALONE
 				// Update virtual stick inputs
 				CheckTouchRect(0, 96, screen.xcenter, screen.ysize)
 				if checkResult > -1
@@ -288,7 +285,6 @@ public function Player_ProcessUpdate
 						object[12].priority = PRIORITY_ALWAYS
 					end if
 				end if
-#endplatform
 				if keyPress[0].start == true
 					if object[12].type != TypeName[Pause Menu]
 						PlaySfx(SfxName[Menu Back], false)
@@ -301,10 +297,8 @@ public function Player_ProcessUpdate
 						object[12].priority = PRIORITY_ALWAYS
 					end if
 				end if
-#platform: USE_STAMDALONE
 			end if
 		end if
-#endplatform
 		
 		ProcessObjectControl()
 	else

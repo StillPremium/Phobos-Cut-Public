@@ -1,5 +1,30 @@
 -- SONIC THE HEDGEHOG 2013 - PHOBOS CUT CHANGELOG
 
+-- Version 1.2 -----------------------------------------------------------------------------------------------------------------------
+
+------------- // General // --------------
+> Fixed Player speeds using regular speed shoes speeds if super
+> Fixed Dropdash Dust having incorrect frame timings
+> Fixed the white flash on the time attack incorrectly functioning
+> Fixed the positioning of the Super Transform button being incorrect
+> Added a restart button to the Time Attack
+> Added quick restart functionality to the Special Stages in Time Attack
+
+------------- // General // --------------
+> Made Player 1 unable to use aerial abilities if Tails Assist is about to occur
+
+
+----------------- // Origins Exclusive // -----------------
+
+------------- // General // --------------
+> Fixed Player 2 being unable to enter a flying state 
+
+---------- // Stage Specific // ----------
+> Fixed Touch Controls being disabled in Special Stage gameplay
+
+
+
+
 -- Version 1.1 -----------------------------------------------------------------------------------------------------------------------
 
 --------------- // Menu // ---------------

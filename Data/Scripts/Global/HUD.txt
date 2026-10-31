@@ -13,6 +13,7 @@ private alias object.value0 : object.drawFunction
 private alias object.value1 : object.flashTimer
 private alias object.value2 : object.timeOver
 private alias object.value3 : object.superOffset
+private alias object.value4 : object.superAlpha
 
 // Player Aliases
 private alias object.type      : player.type
@@ -757,30 +758,76 @@ event ObjectUpdate
 		end if
 	end if
 
-	object.inkEffect = INK_ALPHA
-	object.alpha = 160
-	if player[0].gravity == GRAVITY_AIR
-		if player[0].animation == ANI_JUMPING
-			if player[0].jumpAbilityState == 1
-				object.alpha = 255
+	if options.gameMode == MODE_TIMEATTACK
+		if stage.timeEnabled == true
+			if stage.state == STAGE_RUNNING
+				if keyPress[0].buttonY == true
+					PlaySfx(SfxName[Teleport], false)
+				end if
+				if keyDown[0].buttonY == true
+					object.alpha += 16
+					if object.alpha >= 320
+						stage.quickRestart = true
+						LoadStage()
+					end if
+				else
+					if object.alpha > 13
+						object.alpha -= 32
+					else
+						object.alpha = 0
+					end if
+				end if
+			end if
+		else
+			if stage.state == STAGE_RUNNING
+				if object.alpha > 32
+					if stage.quickRestart == true
+						if object.alpha > 256
+							if music.currentTrack != 0
+								PlayMusic(0)
+							end if
+						end if
+						stage.quickRestart = false
+					end if
+					object.alpha -= 32
+				else
+					object.alpha = 0
+				end if
 			end if
 		end if
 	end if
 
-	CheckGreater(player[0].rings, 49)
-	temp0 = checkResult
-	CheckEqual(specialStage.emeralds, 0x7F)
-	temp0 &= checkResult
-	CheckEqual(options.superStates, true)
-	temp0 &= checkResult
-	if Player_superState == SUPERSTATE_SUPER
-		CheckEqual(player[0].animation, ANI_SUPER_TRANSFORM)
+	object.inkEffect = INK_ALPHA
+	object.superAlpha = 160
+	if player[0].gravity == GRAVITY_AIR
+		if player[0].animation == ANI_JUMPING
+			if player[0].jumpAbilityState == 1
+				object.superAlpha = 255
+			end if
+		end if
+	end if
+
+	if options.gameMode != MODE_TIMEATTACK
+		CheckGreater(player[0].rings, 49)
+		temp0 = checkResult
+		CheckEqual(specialStage.emeralds, 0x7F)
+		temp0 &= checkResult
+		CheckEqual(options.superStates, true)
+		temp0 &= checkResult
+		if Player_superState == SUPERSTATE_SUPER
+			CheckEqual(player[0].animation, ANI_SUPER_TRANSFORM)
+			temp0 &= checkResult
+		end if
+		CheckNotEqual(player[0].controlMode, CONTROLMODE_NONE)
+		temp0 &= checkResult
+		CheckEqual(stage.timeEnabled, true)
+		temp0 &= checkResult
+	else
+		CheckNotEqual(player[0].controlMode, CONTROLMODE_NONE)
+		temp0 = checkResult
+		CheckEqual(stage.timeEnabled, true)
 		temp0 &= checkResult
 	end if
-	CheckNotEqual(player[0].controlMode, CONTROLMODE_NONE)
-	temp0 &= checkResult
-	CheckEqual(stage.timeEnabled, true)
-	temp0 &= checkResult
 	if temp0 == true
 		if player[0].animation == ANI_SUPER_TRANSFORM
 			if object.superOffset < 56
@@ -811,51 +858,10 @@ event ObjectDraw
 
 	CallFunction(object.drawFunction)
 
+	temp2 = object.alpha
+	object.alpha = object.superAlpha
 	if options.gameMode == MODE_TIMEATTACK
-		if stage.timeEnabled == true
-			if stage.state == STAGE_RUNNING
-				if keyPress[0].buttonY == true
-					PlaySfx(SfxName[Teleport], false)
-				end if
-				if keyDown[0].buttonY == true
-					object.alpha += 16
-					if object.alpha >= 320
-						stage.quickRestart = true
-						LoadStage()
-					end if
-				else
-					if object.alpha > 13
-						object.alpha -= 32
-					else
-						object.alpha = 0
-					end if
-				end if
-			end if
-
-			if object.alpha > 13
-				DrawRect(0, 0, screen.xsize, screen.ysize, 224, 224, 224, object.alpha)
-			end if
-		else
-			if stage.state == STAGE_RUNNING
-				if object.alpha > 32
-					if stage.quickRestart == true
-						if object.alpha > 256
-							if music.currentTrack != 0
-								PlayMusic(0)
-							end if
-						end if
-						stage.quickRestart = false
-					end if
-					object.alpha -= 32
-				else
-					object.alpha = 0
-				end if
-			end if
-
-			if object.alpha > 32
-				DrawRect(0, 0, screen.xsize, screen.ysize, 224, 224, 224, object.alpha)
-			end if
-		end if	
+		object.alpha = 255
 	end if
 
 	checkResult = true
@@ -870,18 +876,31 @@ event ObjectDraw
 		temp0 = screen.xsize
 		temp0 -= 61
 		temp0 += object.superOffset
-		temp1 = 16
-		if object.drawFunction == HUD_Draw_Mobile
-			temp1 += 12
-		else
-			if stage.debugMode == true
-				temp1 += 31
-				if player[0].type == TypeName[Debug Mode]
-					object.alpha = 0
-				end if
+		temp1 = 47
+		if object.drawFunction != HUD_Draw_Mobile
+			if player[0].type == TypeName[Debug Mode]
+				object.alpha = 0
 			end if
 		end if
 		DrawSpriteScreenFX(46, FX_INK, temp0, temp1)
+
+		if options.gameMode == MODE_TIMEATTACK
+			DrawSpriteScreenFX(47, FX_INK, temp0, temp1)
+		end if
+	end if
+
+	object.alpha = temp2
+
+	if options.gameMode == MODE_TIMEATTACK
+		if stage.timeEnabled == true
+			if object.alpha > 13
+				DrawRect(0, 0, screen.xsize, screen.ysize, 224, 224, 224, object.alpha)
+			end if
+		else
+			if object.alpha > 32
+				DrawRect(0, 0, screen.xsize, screen.ysize, 224, 224, 224, object.alpha)
+			end if
+		end if	
 	end if
 
 	LoadSpriteSheet("Global/Display.gif")
@@ -949,6 +968,7 @@ event ObjectStartup
 	SpriteFrame(0, 0, 8, 11, 28, 86) 	// 45 - Letter F
 
 	SpriteFrame(0, 0, 43, 20, 192, 308) 	// 46 - Super indicator
+	SpriteFrame(31, 6, 8, 8, 236, 308) 	// 47 - Restart indicator
 
 	foreach (TypeName[HUD], arrayPos0, ALL_ENTITIES)
 		if engine.deviceType == STANDARD
@@ -956,10 +976,8 @@ event ObjectStartup
 		else
 			object[arrayPos0].drawFunction = HUD_Draw_Mobile
 		end if
-		//	object[arrayPos0].drawFunction = HUD_Draw_Mobile
 
-		//object[arrayPos0].superOffset = screen.xsize
-		//object[arrayPos0].superOffset += 3
+		object[arrayPos0].superOffset = 64
 
 		if stage.quickRestart == true
 			foreach (TypeName[Title Card], arrayPos1, ALL_ENTITIES)

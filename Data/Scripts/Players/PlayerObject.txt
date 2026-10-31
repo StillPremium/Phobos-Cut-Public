@@ -539,7 +539,7 @@ public table Player_AmySuperAltPal
 end table
 
 // Each line of these physics tables store the values in this order:
-// Top Speed, Ground Acceleration, Air Acceleration, Air Deleceration, Skid Speed, Rolling Friction, Jump Strength, Jump Cap
+// Top Speed, Ground Acceleration, Air Acceleration, Air Deceleration, Skid Speed, Rolling Friction, Jump Strength, Jump Cap
 // Note that Ground Deceleration is not defined here, rather it's calculated based on Ground Acceleration
 
 private table Player_SonicPhysicsTable
@@ -549,8 +549,8 @@ private table Player_SonicPhysicsTable
 	0x50000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0300, 0x38000, -0x20000 // Super + Underwater
 	0xC0000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0600, 0x68000, -0x40000 // Speed Shoes
 	0x60000, 0x0C00, 0x1800, 0x0600, 0x04000, 0x0300, 0x38000, -0x20000 // Speed Shoes + Underwater
-	0xC0000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0600, 0x80000, -0x40000 // Speed Shoes + Super
-	0x60000, 0x0C00, 0x1800, 0x0600, 0x04000, 0x0300, 0x38000, -0x20000 // Speed Shoes + Super + Underwater
+	0xF0000, 0x3C00, 0x8000, 0x0C00, 0x10000, 0x0600, 0x80000, -0x40000 // Speed Shoes + Super
+	0x80000, 0x1E00, 0x4000, 0x0600, 0x08000, 0x0300, 0x38000, -0x20000 // Speed Shoes + Super + Underwater
 end table
 
 private table Player_TailsPhysicsTable
@@ -560,8 +560,8 @@ private table Player_TailsPhysicsTable
 	0x50000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0300, 0x38000, -0x20000 // Super + Underwater
 	0xC0000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0600, 0x68000, -0x40000 // Speed Shoes
 	0x60000, 0x0C00, 0x1800, 0x0600, 0x04000, 0x0300, 0x38000, -0x20000 // Speed Shoes + Underwater
-	0xC0000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0600, 0x80000, -0x40000 // Speed Shoes + Super
-	0x60000, 0x0C00, 0x1800, 0x0600, 0x04000, 0x0300, 0x38000, -0x20000 // Speed Shoes + Super + Underwater
+	0xF0000, 0x3C00, 0x8000, 0x0C00, 0x10000, 0x0600, 0x80000, -0x40000 // Speed Shoes + Super
+	0x80000, 0x1E00, 0x4000, 0x0600, 0x08000, 0x0300, 0x38000, -0x20000 // Speed Shoes + Super + Underwater
 end table
 
 private table Player_KnuxPhysicsTable
@@ -571,8 +571,8 @@ private table Player_KnuxPhysicsTable
 	0x50000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0300, 0x30000, -0x20000 // Super + Underwater
 	0xC0000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0600, 0x60000, -0x40000 // Speed Shoes
 	0x60000, 0x0C00, 0x1800, 0x0600, 0x04000, 0x0300, 0x30000, -0x20000 // Speed Shoes + Underwater
-	0xC0000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0600, 0x60000, -0x40000 // Speed Shoes + Super
-	0x60000, 0x0C00, 0x1800, 0x0600, 0x08000, 0x0300, 0x30000, -0x20000 // Speed Shoes + Super + Underwater
+	0xF0000, 0x3C00, 0x8000, 0x0C00, 0x10000, 0x0600, 0x60000, -0x40000 // Speed Shoes + Super
+	0x80000, 0x1E00, 0x4000, 0x0600, 0x08000, 0x0300, 0x30000, -0x20000 // Speed Shoes + Super + Underwater
 end table
 
 private table Player_AmyPhysicsTable
@@ -582,8 +582,8 @@ private table Player_AmyPhysicsTable
 	0x50000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0300, 0x38000, -0x20000 // Super + Underwater
 	0xC0000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0600, 0x68000, -0x40000 // Speed Shoes
 	0x60000, 0x0C00, 0x1800, 0x0600, 0x04000, 0x0300, 0x38000, -0x20000 // Speed Shoes + Underwater
-	0xC0000, 0x1800, 0x3000, 0x0C00, 0x08000, 0x0600, 0x80000, -0x40000 // Speed Shoes + Super
-	0x60000, 0x0C00, 0x1800, 0x0600, 0x04000, 0x0300, 0x38000, -0x20000 // Speed Shoes + Super + Underwater
+	0xF0000, 0x3C00, 0x8000, 0x0C00, 0x10000, 0x0600, 0x80000, -0x40000 // Speed Shoes + Super
+	0x80000, 0x1E00, 0x4000, 0x0600, 0x08000, 0x0300, 0x38000, -0x20000 // Speed Shoes + Super + Underwater
 end table
 
 
@@ -2749,6 +2749,12 @@ public function Player_Action_DblJumpSonic
 		CheckLower(player.jumpAbilityState, 2)
 		temp0 &= checkResult
 
+		if stage.player2Enabled == true
+			// Can't do anything if Tails assist is about to occur
+			CheckEqual(player.up, false)
+			temp0 &= checkResult
+		end if
+
 		if temp0 == true // All checks passed?
 			// Determine ability with the player's current shield
 			switch player.shield
@@ -2866,9 +2872,17 @@ public function Player_Action_DblJumpSonic
 				break
 			end switch
 		else
-			// Just start the dropdash
-			if player.jumpAbilityState < 2
-				player.jumpAbilityState = 2
+			checkResult = true
+			if stage.player2Enabled == true
+				// Can't do anything if Tails assist is about to occur
+				CheckEqual(player.up, false)
+			end if
+
+			if checkResult == true
+				// Just start the dropdash
+				if player.jumpAbilityState < 2
+					player.jumpAbilityState = 2
+				end if
 			end if
 		end if
 	end if
@@ -2929,7 +2943,18 @@ public function Player_Action_DblJumpTails
 	end if
 
 	// Only act if the jump button is pressed
-	if player.jumpPress == true
+	CheckEqual(player.jumpPress, true)
+	temp0 = checkResult
+
+	if stage.player2Enabled == true
+		if player.isSidekick == false
+			// Don't act if Tails assist is about to occur though
+			CheckEqual(player.up, false)
+			temp0 &= checkResult
+		end if
+	end if
+
+	if temp0 == true
 		// Make Tails start flying
 #platform: USE_ORIGINS
 		CallNativeFunction4(NotifyCallback, NOTIFY_STATS_CHARA_ACTION, 0, 1, 0)
@@ -2985,7 +3010,16 @@ public function Player_Action_DblJumpKnux
 	end if
 
 	// Only act if the jump button is pressed
-	if player.jumpPress == true
+	CheckEqual(player.jumpPress, true)
+	temp0 = checkResult
+
+	if stage.player2Enabled == true
+		// Don't act if Tails assist is about to occur though
+		CheckEqual(player.up, false)
+		temp0 &= checkResult
+	end if
+
+	if temp0 == true
 		// Start gliding
 #platform: USE_ORIGINS
 		CallNativeFunction4(NotifyCallback, NOTIFY_STATS_CHARA_ACTION2, 1, 0, 0)
@@ -3048,7 +3082,16 @@ public function Player_Action_DblJumpAmy
 	end if
 
 	// Only act if the jump button is pressed
-	if player.jumpPress == true
+	CheckEqual(player.jumpPress, true)
+	temp0 = checkResult
+
+	if stage.player2Enabled == true
+		// Don't act if Tails assist is about to occur though
+		CheckEqual(player.up, false)
+		temp0 &= checkResult
+	end if
+
+	if temp0 == true
 		// Start the Hammer Jump
 		PlaySfx(SfxName[HammerJump], false)
 		CallNativeFunction4(NotifyCallback, NOTIFY_STATS_CHARA_ACTION2, 0, 1, 0)

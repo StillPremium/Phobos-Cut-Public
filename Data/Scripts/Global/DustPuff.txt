@@ -70,31 +70,47 @@ event ObjectUpdate
 	case 12
 	case 13
 	case 14
+		object.animationTimer++
+		if object.animationTimer > 0
+			object.frame++
+			object.animationTimer = 0
+		end if
+		break
+
 	case 15
 	case 16
 	case 17
 	case 18
-	case 19
-	case 20
-	case 21
-	case 22
-	case 23
-	case 24
-	case 25
-	case 26
-	case 27
-	case 28
-	case 29
-	case 30
 		object.animationTimer++
 		if object.animationTimer > 1
 			object.frame++
 			object.animationTimer = 0
 		end if
 		break
+
+	case 19
+	case 20
+	case 21
+	case 22
+		object.animationTimer++
+		if object.animationTimer > 2
+			object.frame++
+			object.animationTimer = 0
+		end if
+		break
+
+	case 23
+	case 24
+	case 25
+	case 26
+		object.animationTimer++
+		if object.animationTimer > 3
+			object.frame++
+			object.animationTimer = 0
+		end if
+		break
 		
-	case 31
-	case 32
+	case 27
 		object.type = TypeName[Blank Object]
 		break
 		
@@ -114,7 +130,7 @@ event ObjectDraw
 		else
 			if object.frame < 11
 				object.type = TypeName[Blank Object]
-				object.frame = 31
+				object.frame = 27
 			else
 				DrawSpriteFX(object.frame, FX_FLIP, object.xpos, object.ypos)
 			end if
@@ -158,11 +174,6 @@ event ObjectStartup
 	SpriteFrame(-12, -25, 32, 25, 166, 282)
 	SpriteFrame(-12, -25, 32, 25, 199, 282)
 	SpriteFrame(-12, -25, 32, 25, 232, 282)
-	SpriteFrame(0, 0, 0, 0, 0, 0)
-	SpriteFrame(0, 0, 0, 0, 0, 0)
-	SpriteFrame(0, 0, 0, 0, 0, 0)
-	SpriteFrame(0, 0, 0, 0, 0, 0)
-	SpriteFrame(0, 0, 0, 0, 0, 0)
 	SpriteFrame(0, 0, 0, 0, 0, 0)
 end event
 
